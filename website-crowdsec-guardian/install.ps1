@@ -265,17 +265,59 @@ if (Test-Path $nssmPath) {
 }
 
 # ============================================================
-# Step 6: Create Windows Service
+# Step 6: Verify crowdsec.exe can run
+# ============================================================
+Write-Step "Testing crowdsec.exe"
+$crowdsecExe = "$InstallDir\crowdsec.exe"
+if (Test-Path $crowdsecExe) {
+    try {
+        $testOutput = & $crowdsecExe --version 2>&1
+        Write-Ok "crowdsec.exe version: $testOutput"
+    } catch {
+        Write-Warn "crowdsec.exe exists but may not run properly: $_"
+        Write-Warn "Check that all dependencies (DLLs) are present."
+    }
+} else {
+    Write-Fail "crowdsec.exe not found at $crowdsecExe"
+}
+
+# ============================================================
+# Step 7: Create Windows Service via NSSM
 # ============================================================
 Write-Step "Creating CrowdSec Windows Service"
 if (Test-Path $nssmPath) {
-    if (Test-Path "$InstallDir\crowdsec.exe") {
-        & $nssmPath install CrowdSec "$InstallDir\crowdsec.exe" 2>$null
-        & $nssmPath set CrowdSec AppDirectory $InstallDir 2>$null
-        & $nssmPath set CrowdSec DisplayName "CrowdSec Guardian" 2>$null
-        & $nssmPath set CrowdSec Description "CrowdSec Security Engine - CAPI: $CAPIUrl" 2>$null
-        & $nssmPath set CrowdSec Start SERVICE_AUTO_START 2>$null
-        & $nssmPath set CrowdSec ObjectName LocalSystem 2>$null
+    if (Test-Path $crowdsecExe) {
+        # Remove existing service if present
+        $existing = Get-Service CrowdSec -ErrorAction SilentlyContinue
+        if ($existing) {
+            Write-Warn "Removing existing CrowdSec service..."
+            & $nssmPath remove CrowdSec confirm 2>&1 | Out-Null
+            Start-Sleep -Seconds 2
+        }
+
+        # Install service with NSSM
+        Write-Host "  Installing service..." -ForegroundColor Gray
+        & $nssmPath install CrowdSec $crowdsecExe 2>&1 | Out-Null
+        & $nssmPath set CrowdSec AppDirectory $InstallDir 2>&1 | Out-Null
+        & $nssmPath set CrowdSec AppParameters "" 2>&1 | Out-Null
+        & $nssmPath set CrowdSec DisplayName "CrowdSec Guardian" 2>&1 | Out-Null
+        & $nssmPath set CrowdSec Description "CrowdSec Security Engine - CAPI: $CAPIUrl" 2>&1 | Out-Null
+        & $nssmPath set CrowdSec Start SERVICE_AUTO_START 2>&1 | Out-Null
+        & $nssmPath set CrowdSec ObjectName LocalSystem 2>&1 | Out-Null
+        & $nssmPath set CrowdSec Type SERVICE_WIN32_OWN_PROCESS 2>&1 | Out-Null
+
+        # Set stdout/stderr log files so we can debug failures
+        & $nssmPath set CrowdSec AppStdout "$DataDir\log\service_stdout.log" 2>&1 | Out-Null
+        & $nssmPath set CrowdSec AppStderr "$DataDir\log\service_stderr.log" 2>&1 | Out-Null
+        & $nssmPath set CrowdSec AppStdoutCreationDisposition 4 2>&1 | Out-Null
+        & $nssmPath set CrowdSec AppStderrCreationDisposition 4 2>&1 | Out-Null
+        & $nssmPath set CrowdSec AppRotateFiles 1 2>&1 | Out-Null
+        & $nssmPath set CrowdSec AppRotateBytes 10485760 2>&1 | Out-Null
+
+        # Set restart action: restart on failure
+        & $nssmPath set CrowdSec AppExit Default Restart 2>&1 | Out-Null
+        & $nssmPath set CrowdSec AppRestartDelay 5000 2>&1 | Out-Null
+
         Write-Ok "Service 'CrowdSec Guardian' created"
     } else {
         Write-Warn "crowdsec.exe not found, skipping service creation"
@@ -285,9 +327,14 @@ if (Test-Path $nssmPath) {
 }
 
 # ============================================================
-# Step 7: Create basic config
+# Step 8: Create basic config
 # ============================================================
 Write-Step "Creating basic config"
+
+# Ensure log directory exists
+if (-not (Test-Path "$DataDir\log")) {
+    New-Item -ItemType Directory -Path "$DataDir\log" -Force | Out-Null
+}
 
 $configLines = @(
     "# CrowdSec Guardian Configuration",
@@ -321,15 +368,30 @@ $configLines | Out-File -FilePath "$DataDir\config\config.yaml" -Encoding UTF8
 Write-Ok "Config created at $DataDir\config\config.yaml"
 
 # ============================================================
-# Step 8: Start service
+# Step 9: Start service with detailed error reporting
 # ============================================================
 Write-Step "Starting CrowdSec Guardian"
+Start-Sleep -Seconds 2
 try {
     Start-Service CrowdSec -ErrorAction Stop
-    Write-Ok "Service started successfully"
+    Start-Sleep -Seconds 3
+    $svc = Get-Service CrowdSec
+    Write-Ok "Service status: $($svc.Status)"
 } catch {
-    Write-Warn "Could not start service: $_"
-    Write-Warn "Try: Start-Service CrowdSec"
+    Write-Fail "Could not start service: $_"
+    Write-Host ""
+    Write-Host "  Troubleshooting steps:" -ForegroundColor Yellow
+    Write-Host "  1. Check service logs:" -ForegroundColor Yellow
+    Write-Host "     Get-Content '$DataDir\log\service_stderr.log'" -ForegroundColor White
+    Write-Host "     Get-Content '$DataDir\log\service_stdout.log'" -ForegroundColor White
+    Write-Host "  2. Test crowdsec.exe manually:" -ForegroundColor Yellow
+    Write-Host "     cd '$InstallDir'" -ForegroundColor White
+    Write-Host "     .\crowdsec.exe --config '$DataDir\config\config.yaml'" -ForegroundColor White
+    Write-Host "  3. Check Windows Event Log:" -ForegroundColor Yellow
+    Write-Host "     Get-EventLog -LogName System -Source 'Service Control Manager' -Newest 10" -ForegroundColor White
+    Write-Host "  4. Try starting manually:" -ForegroundColor Yellow
+    Write-Host "     nssm start CrowdSec" -ForegroundColor White
+    Write-Host ""
 }
 
 # ============================================================
