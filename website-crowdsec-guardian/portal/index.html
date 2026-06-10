@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrowdSec Guardian Portal</title>
+<style>
+:root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #21262d;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --red: #f85149;
+    --yellow: #d29922;
+    --orange: #db6d28;
+    --purple: #bc8cff;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+/* Header */
+.header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header h1 .shield {
+    font-size: 24px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--green);
+    display: inline-block;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    overflow-x: auto;
+}
+
+.tab {
+    padding: 12px 20px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    color: var(--text2);
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Content */
+.content { padding: 24px; max-width: 1400px; margin: 0 auto; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Stats Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.stat-card .label {
+    font-size: 12px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.stat-card .value {
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.stat-card .value.green { color: var(--green); }
+.stat-card .value.red { color: var(--red); }
+.stat-card .value.blue { color: var(--accent); }
+.stat-card .value.yellow { color: var(--yellow); }
+
+/* Tables */
+.table-container {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.table-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.table-header h2 {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    text-align: left;
+    padding: 12px 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+}
+
+td {
+    padding: 12px 20px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+tr:hover td { background: var(--bg3); }
+tr:last-child td { border-bottom: none; }
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.badge.green { background: rgba(63,185,80,0.15); color: var(--green); }
+.badge.red { background: rgba(248,81,73,0.15); color: var(--red); }
+.badge.yellow { background: rgba(210,153,34,0.15); color: var(--yellow); }
+.badge.blue { background: rgba(88,166,255,0.15); color: var(--accent); }
+
+/* Buttons */
+.btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text);
+    transition: all 0.2s;
+}
+
+.btn:hover { background: var(--border); }
+.btn-green { background: var(--green); color: #fff; border-color: var(--green); }
+.btn-green:hover { background: #2ea043; }
+.btn-red { background: transparent; color: var(--red); border-color: var(--red); }
+.btn-red:hover { background: rgba(248,81,73,0.15); }
+.btn-blue { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-blue:hover { background: #4393e6; }
+
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+/* Alerts feed */
+.alert-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.alert-item .icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.alert-item .details { flex: 1; }
+.alert-item .details .title { font-weight: 600; margin-bottom: 4px; }
+.alert-item .details .meta { font-size: 12px; color: var(--text2); }
+
+/* Charts / Bars */
+.bar-chart { margin-top: 16px; }
+.bar-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 12px;
+}
+
+.bar-label {
+    width: 200px;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+}
+
+.bar-track {
+    flex: 1;
+    height: 24px;
+    background: var(--bg3);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    min-width: 30px;
+    transition: width 0.5s;
+}
+
+.bar-fill.blue { background: var(--accent); }
+.bar-fill.red { background: var(--red); }
+.bar-fill.green { background: var(--green); }
+.bar-fill.purple { background: var(--purple); }
+.bar-fill.orange { background: var(--orange); }
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text2);
+}
+
+.empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+.empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+.empty-state p { font-size: 14px; }
+
+/* Login overlay */
+.login-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.login-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 40px;
+    width: 400px;
+    max-width: 90%;
+}
+
+.login-box h2 {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.login-box input {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.login-box input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.login-box .btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+}
+
+/* Refresh indicator */
+.refresh-btn {
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+}
+
+.refresh-btn:hover { color: var(--accent); background: var(--bg3); }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .bar-label { width: 120px; }
+    td, th { padding: 8px 12px; font-size: 12px; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text2); }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+        <h2>CrowdSec Guardian</h2>
+        <p style="text-align:center;color:var(--text2);margin-bottom:20px;font-size:14px;">
+            Enter dashboard access token
+        </p>
+        <input type="password" id="tokenInput" placeholder="Dashboard token" autofocus>
+        <button class="btn btn-blue" onclick="login()">Access Dashboard</button>
+        <p style="text-align:center;color:var(--text2);margin-top:16px;font-size:12px;">
+            Default: guardian-secret-token-2024
+        </p>
+    </div>
+</div>
+
+<!-- Header -->
+<div class="header" id="mainHeader" style="display:none;">
+    <h1>
+        <span class="shield">&#x1F6E1;</span>
+        CrowdSec Guardian
+    </h1>
+    <div class="header-right">
+        <span class="status-dot"></span>
+        <span style="font-size:13px;color:var(--text2);" id="lastUpdate">Connecting...</span>
+        <button class="refresh-btn" onclick="refreshAll()" title="Refresh">&#x21BB;</button>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs" id="mainTabs" style="display:none;">
+    <div class="tab active" onclick="showTab('dashboard')">&#x1F4CA; Dashboard</div>
+    <div class="tab" onclick="showTab('agents')">&#x1F4F1; Agents</div>
+    <div class="tab" onclick="showTab('alerts')">&#x1F6A8; Alerts</div>
+    <div class="tab" onclick="showTab('decisions')">&#x1F6E1; Decisions</div>
+    <div class="tab" onclick="showTab('attacks')">&#x1F525; Attack Monitor</div>
+</div>
+
+<!-- Content -->
+<div class="content" id="mainContent" style="display:none;">
+
+    <!-- DASHBOARD TAB -->
+    <div class="tab-content active" id="tab-dashboard">
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="label">Active Agents</div>
+                <div class="value green" id="statAgents">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Pending Approval</div>
+                <div class="value yellow" id="statPending">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Total Alerts (24h)</div>
+                <div class="value red" id="statAlerts">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Unique Attacker IPs</div>
+                <div class="value blue" id="statIPs">-</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h2>Top Attack Scenarios</h2>
+            </div>
+            <div id="scenariosChart" class="bar-chart" style="padding:20px;"></div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h2>Alert Origins</h2>
+            </div>
+            <div id="originsChart" class="bar-chart" style="padding:20px;"></div>
+        </div>
+    </div>
+
+    <!-- AGENTS TAB -->
+    <div class="tab-content" id="tab-agents">
+        <div class="table-container">
+            <div class="table-header">
+                <h2>Pending Approval</h2>
+                <span class="badge yellow" id="pendingCount">0</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Machine ID</th>
+                        <th>IP Address</th>
+                        <th>Registered</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="pendingTable"></tbody>
+            </table>
+            <div class="empty-state" id="pendingEmpty">
+                <div class="icon">&#x2705;</div>
+                <h3>No pending agents</h3>
+                <p>All agent requests have been processed</p>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h2>Approved Agents</h2>
+                <span class="badge green" id="approvedCount">0</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Machine ID</th>
+                        <th>IP Address</th>
+                        <th>Status</th>
+                        <th>Last Seen</th>
+                        <th>Registered</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="approvedTable"></tbody>
+            </table>
+            <div class="empty-state" id="approvedEmpty">
+                <div class="icon">&#x1F4F1;</div>
+                <h3>No agents connected</h3>
+                <p>Agents will appear here after registration and approval</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ALERTS TAB -->
+    <div class="tab-content" id="tab-alerts">
+        <div class="table-container">
+            <div class="table-header">
+                <h2>Recent Alerts</h2>
+                <div style="display:flex;gap:8px;">
+                    <select class="btn" id="alertFilter" onchange="loadAlerts()">
+                        <option value="24h">Last 24h</option>
+                        <option value="1h">Last 1h</option>
+                        <option value="6h">Last 6h</option>
+                        <option value="7d">Last 7d</option>
+                    </select>
+                </div>
+            </div>
+            <div id="alertsList" style="max-height:600px;overflow-y:auto;"></div>
+            <div class="empty-state" id="alertsEmpty">
+                <div class="icon">&#x1F6A8;</div>
+                <h3>No alerts yet</h3>
+                <p>Alerts will appear here when CrowdSec detects attacks</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- DECISIONS TAB -->
+    <div class="tab-content" id="tab-decisions">
+        <div class="table-container">
+            <div class="table-header">
+                <h2>Active Decisions (Bans)</h2>
+                <span class="badge red" id="decisionsCount">0</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>IP / Range</th>
+                        <th>Type</th>
+                        <th>Duration</th>
+                        <th>Scenario</th>
+                        <th>Origin</th>
+                        <th>Country</th>
+                    </tr>
+                </thead>
+                <tbody id="decisionsTable"></tbody>
+            </table>
+            <div class="empty-state" id="decisionsEmpty">
+                <div class="icon">&#x2705;</div>
+                <h3>No active decisions</h3>
+                <p>No IPs are currently banned</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ATTACKS TAB -->
+    <div class="tab-content" id="tab-attacks">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Top Blocked IP</div>
+                <div class="value red" style="font-size:20px;" id="topIP">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Top Scenario</div>
+                <div class="value yellow" style="font-size:16px;" id="topScenario">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Top Origin</div>
+                <div class="value blue" style="font-size:16px;" id="topOrigin">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Countries</div>
+                <div class="value green" id="topCountry">-</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h2>Top Attacker IPs</h2>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>IP Address</th>
+                        <th>Alerts</th>
+                        <th>Country</th>
+                        <th>ASN</th>
+                        <th>Reputation</th>
+                    </tr>
+                </thead>
+                <tbody id="attackIPsTable"></tbody>
+            </table>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h2>Recent Attack Feed</h2>
+            </div>
+            <div id="attackFeed" style="max-height:400px;overflow-y:auto;"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let token = '';
+let autoRefresh = null;
+
+function login() {
+    const input = document.getElementById('tokenInput');
+    token = input.value.trim();
+    if (!token) return;
+
+    // Test the token
+    fetch('/api/dashboard/stats', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(r => {
+            if (r.ok) {
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('mainHeader').style.display = '';
+                document.getElementById('mainTabs').style.display = '';
+                document.getElementById('mainContent').style.display = '';
+                refreshAll();
+                autoRefresh = setInterval(refreshAll, 15000);
+            } else {
+                input.style.borderColor = 'var(--red)';
+                input.value = '';
+                input.placeholder = 'Invalid token';
+            }
+        })
+        .catch(() => {
+            input.style.borderColor = 'var(--red)';
+            input.value = '';
+            input.placeholder = 'Cannot connect to portal';
+        });
+}
+
+document.getElementById('tokenInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') login();
+});
+
+function api(path) {
+    return fetch(path, { headers: { 'Authorization': 'Bearer ' + token } }).then(r => r.json());
+}
+
+function showTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.target.classList.add('active');
+
+    if (name === 'agents') loadAgents();
+    if (name === 'alerts') loadAlerts();
+    if (name === 'decisions') loadDecisions();
+    if (name === 'attacks') loadAttacks();
+}
+
+function refreshAll() {
+    loadStats();
+    loadAgents();
+    loadAlerts();
+    loadDecisions();
+    loadAttacks();
+    document.getElementById('lastUpdate').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+}
+
+// === STATS ===
+function loadStats() {
+    api('/api/dashboard/stats').then(data => {
+        document.getElementById('statAgents').textContent = data.agents.active || 0;
+        document.getElementById('statPending').textContent = data.agents.pending || 0;
+        document.getElementById('statAlerts').textContent = data.alerts.total || 0;
+        document.getElementById('statIPs').textContent = data.alerts.unique_ips || 0;
+
+        // Scenarios chart
+        const sData = data.top_scenarios || [];
+        const sMax = sData.length ? sData[0].count : 1;
+        document.getElementById('scenariosChart').innerHTML = sData.map(s => {
+            const pct = Math.round((s.count / sMax) * 100);
+            return '<div class="bar-row"><div class="bar-label">' + esc(s.name) + '</div>' +
+                '<div class="bar-track"><div class="bar-fill red" style="width:' + pct + '%">' + s.count + '</div></div></div>';
+        }).join('') || '<div class="empty-state"><p>No scenario data yet</p></div>';
+
+        // Origins chart
+        const oData = data.top_origins || [];
+        const oMax = oData.length ? oData[0].count : 1;
+        document.getElementById('originsChart').innerHTML = oData.map(o => {
+            const pct = Math.round((o.count / oMax) * 100);
+            return '<div class="bar-row"><div class="bar-label">' + esc(o.name) + '</div>' +
+                '<div class="bar-track"><div class="bar-fill blue" style="width:' + pct + '%">' + o.count + '</div></div></div>';
+        }).join('') || '<div class="empty-state"><p>No origin data yet</p></div>';
+    }).catch(() => {});
+}
+
+// === AGENTS ===
+function loadAgents() {
+    api('/api/dashboard/agents').then(data => {
+        const pending = data.pending || [];
+        const approved = data.approved || [];
+
+        document.getElementById('pendingCount').textContent = pending.length;
+        document.getElementById('approvedCount').textContent = approved.length;
+
+        document.getElementById('pendingTable').innerHTML = pending.map(a => '<tr>' +
+            '<td><strong>' + esc(a.machine_id) + '</strong></td>' +
+            '<td>' + esc(a.ip || '-') + '</td>' +
+            '<td>' + fmtDate(a.registered_at) + '</td>' +
+            '<td><span class="badge yellow">Pending</span></td>' +
+            '<td><button class="btn btn-green btn-sm" onclick="validateAgent(\'' + esc(a.machine_id) + '\')">Approve</button> ' +
+            '<button class="btn btn-red btn-sm" onclick="removeAgent(\'' + esc(a.machine_id) + '\',\'pending\')">Reject</button></td>' +
+            '</tr>').join('');
+
+        document.getElementById('approvedTable').innerHTML = approved.map(a => '<tr>' +
+            '<td><strong>' + esc(a.machine_id) + '</strong></td>' +
+            '<td>' + esc(a.ip || '-') + '</td>' +
+            '<td><span class="badge ' + (a.status === 'active' ? 'green' : 'blue') + '">' + (a.status || 'approved') + '</span></td>' +
+            '<td>' + fmtDate(a.last_seen) + '</td>' +
+            '<td>' + fmtDate(a.registered_at) + '</td>' +
+            '<td><button class="btn btn-red btn-sm" onclick="removeAgent(\'' + esc(a.machine_id) + '\',\'approved\')">Remove</button></td>' +
+            '</tr>').join('');
+
+        document.getElementById('pendingEmpty').style.display = pending.length ? 'none' : '';
+        document.getElementById('approvedEmpty').style.display = approved.length ? 'none' : '';
+    }).catch(() => {});
+}
+
+function validateAgent(id) {
+    fetch('/api/dashboard/agents/' + encodeURIComponent(id) + '/validate', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token }
+    }).then(r => r.json()).then(data => {
+        if (data.status === 'approved') {
+            loadAgents();
+        }
+    }).catch(() => {});
+}
+
+function removeAgent(id, from) {
+    if (!confirm('Remove agent: ' + id + '?')) return;
+    fetch('/api/dashboard/agents/' + encodeURIComponent(id), {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+    }).then(() => loadAgents()).catch(() => {});
+}
+
+// === ALERTS ===
+function loadAlerts() {
+    const since = document.getElementById('alertFilter').value;
+    api('/api/dashboard/alerts?since=' + since).then(data => {
+        const alerts = Array.isArray(data) ? data : (data.data || []);
+        document.getElementById('alertsEmpty').style.display = alerts.length ? 'none' : '';
+
+        document.getElementById('alertsList').innerHTML = alerts.slice(0, 50).map(a => {
+            const meta = [];
+            if (a.source && a.source.ip) meta.push('IP: ' + a.source.ip);
+            if (a.source && a.source.asn) meta.push('ASN: ' + a.source.asn);
+            if (a.source && a.source.cn) meta.push(a.source.cn);
+            if (a.scenario) meta.push('Scenario: ' + a.scenario);
+            if (a.message) meta.push(a.message);
+
+            return '<div class="alert-item">' +
+                '<div class="icon">&#x1F6A8;</div>' +
+                '<div class="details">' +
+                    '<div class="title">' + esc(a.scenario || 'Unknown') + '</div>' +
+                    '<div class="meta">' + meta.map(esc).join(' | ') + '</div>' +
+                    '<div class="meta" style="margin-top:4px;">' + fmtDate(a.created_at || a.timestamp) + '</div>' +
+                '</div>' +
+                '<span class="badge red">Alert</span>' +
+            '</div>';
+        }).join('');
+    }).catch(() => {});
+}
+
+// === DECISIONS ===
+function loadDecisions() {
+    api('/api/dashboard/decisions').then(data => {
+        const decisions = Array.isArray(data) ? data : (data.data || []);
+        document.getElementById('decisionsCount').textContent = decisions.length;
+        document.getElementById('decisionsEmpty').style.display = decisions.length ? 'none' : '';
+
+        document.getElementById('decisionsTable').innerHTML = decisions.slice(0, 100).map(d => '<tr>' +
+            '<td><strong>' + esc(d.value || '-') + '</strong></td>' +
+            '<td><span class="badge red">' + esc(d.type || 'ban') + '</span></td>' +
+            '<td>' + esc(d.duration || '-') + '</td>' +
+            '<td>' + esc(d.scenario || '-') + '</td>' +
+            '<td><span class="badge blue">' + esc(d.origin || '-') + '</span></td>' +
+            '<td>' + esc(d.source && d.source.cn ? d.source.cn : '-') + '</td>' +
+            '</tr>').join('');
+    }).catch(() => {});
+}
+
+// === ATTACKS ===
+function loadAttacks() {
+    api('/api/dashboard/alerts?since=24h&limit=1000').then(data => {
+        const alerts = Array.isArray(data) ? data : (data.data || []);
+
+        // Count by IP
+        const ipCount = {};
+        const ipInfo = {};
+        alerts.forEach(a => {
+            if (a.source && a.source.ip) {
+                const ip = a.source.ip;
+                ipCount[ip] = (ipCount[ip] || 0) + 1;
+                if (!ipInfo[ip]) ipInfo[ip] = a.source;
+            }
+        });
+
+        const topIPs = Object.entries(ipCount)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 20);
+
+        document.getElementById('attackIPsTable').innerHTML = topIPs.map(([ip, count]) => {
+            const info = ipInfo[ip] || {};
+            return '<tr>' +
+                '<td><strong>' + esc(ip) + '</strong></td>' +
+                '<td><span class="badge red">' + count + '</span></td>' +
+                '<td>' + esc(info.cn || '-') + '</td>' +
+                '<td>' + esc(info.asn || '-') + '</td>' +
+                '<td>' + (info.reputation || '-') + '</td>' +
+            '</tr>';
+        }).join('');
+
+        // Top stats
+        if (topIPs.length) {
+            document.getElementById('topIP').textContent = topIPs[0][0];
+        }
+
+        // Top scenario
+        const scenCount = {};
+        alerts.forEach(a => { if (a.scenario) scenCount[a.scenario] = (scenCount[a.scenario] || 0) + 1; });
+        const topScen = Object.entries(scenCount).sort((a, b) => b[1] - a[1])[0];
+        if (topScen) document.getElementById('topScenario').textContent = topScen[0];
+
+        // Top origin
+        const origCount = {};
+        alerts.forEach(a => { if (a.source && a.source.origin) origCount[a.source.origin] = (origCount[a.source.origin] || 0) + 1; });
+        const topOrig = Object.entries(origCount).sort((a, b) => b[1] - a[1])[0];
+        if (topOrig) document.getElementById('topOrigin').textContent = topOrig[0];
+
+        // Top country
+        const cnCount = {};
+        alerts.forEach(a => { if (a.source && a.source.cn) cnCount[a.source.cn] = (cnCount[a.source.cn] || 0) + 1; });
+        const topCn = Object.entries(cnCount).sort((a, b) => b[1] - a[1])[0];
+        if (topCn) document.getElementById('topCountry').textContent = topCn[0];
+
+        // Attack feed
+        document.getElementById('attackFeed').innerHTML = alerts.slice(0, 30).map(a => {
+            const ip = a.source ? a.source.ip : '-';
+            const cn = a.source ? (a.source.cn || '') : '';
+            return '<div class="alert-item">' +
+                '<div class="icon">&#x1F525;</div>' +
+                '<div class="details">' +
+                    '<div class="title"><strong>' + esc(ip) + '</strong> ' + esc(cn ? '(' + cn + ')' : '') + '</div>' +
+                    '<div class="meta">Scenario: ' + esc(a.scenario || 'N/A') + ' | ' + fmtDate(a.created_at || a.timestamp) + '</div>' +
+                '</div>' +
+                '<span class="badge red">Blocked</span>' +
+            '</div>';
+        }).join('');
+    }).catch(() => {});
+}
+
+// === HELPERS ===
+function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(d) {
+    if (!d) return '-';
+    try {
+        const dt = new Date(d);
+        if (isNaN(dt)) return String(d);
+        const now = new Date();
+        const diff = (now - dt) / 1000;
+        if (diff < 60) return Math.round(diff) + 's ago';
+        if (diff < 3600) return Math.round(diff/60) + 'm ago';
+        if (diff < 86400) return Math.round(diff/3600) + 'h ago';
+        return dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString();
+    } catch(e) { return String(d); }
+}
+</script>
+</body>
+</html>
