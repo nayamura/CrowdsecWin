@@ -14,6 +14,7 @@ $ErrorActionPreference = "Stop"
 function Write-Step($msg) { Write-Host "`n=== $msg ===" -ForegroundColor Cyan }
 function Write-Ok($msg) { Write-Host "  [OK] $msg" -ForegroundColor Green }
 function Write-Warn($msg) { Write-Host "  [WARN] $msg" -ForegroundColor Yellow }
+function Write-Fail($msg) { Write-Host "  [FAIL] $msg" -ForegroundColor Red }
 
 # Check admin
 $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
@@ -22,15 +23,14 @@ if (-not $isAdmin) {
     exit 1
 }
 
-Write-Host @"
-   _____ _____            __
-  / ____/ ____/___  ____ _/ /_
- / /   / / __/ __ \/ __ \`/ __/
-/ /___/ /_/ / /_/ / /_/ / /_
-\____/\____/ .___/\__,_/\__/
-         /_/   Guardian Installer
-"@ -ForegroundColor Cyan
-
+Write-Host ""
+Write-Host "   _____ _____            __"
+Write-Host "  / ____/ ____/___  ____ _/ /_"
+Write-Host " / /   / / __/ __ \/ __ '/ __/"
+Write-Host "/ /___/ /_/ / /_/ / /_/ / /_"
+Write-Host "\____/\____/ .___/\__,_/\__/"
+Write-Host "         /_/   Guardian Installer"
+Write-Host ""
 Write-Host "  CAPI URL: $CAPIUrl" -ForegroundColor Yellow
 Write-Host "  Install Dir: $InstallDir" -ForegroundColor Yellow
 Write-Host "  Data Dir: $DataDir" -ForegroundColor Yellow
@@ -38,9 +38,6 @@ Write-Host "  Data Dir: $DataDir" -ForegroundColor Yellow
 # ============================================================
 # Helper: Get file from local folder or download from GitHub
 # ============================================================
-# Looks for $fileName in the script's directory and subfolders.
-# If not found, downloads from the GitHub repo.
-# Returns the full path to the file, or $null if both fail.
 function Get-FileLocalOrRepo {
     param(
         [string]$FileName,
@@ -48,24 +45,28 @@ function Get-FileLocalOrRepo {
         [string]$RepoBase = "https://github.com/nayamura/CrowdsecWin/raw/main"
     )
 
-    # 1) Search locally (script directory + subfolders)
-    $scriptDir = Split-Path -Parent $MyInvocation.ScriptName
-    if (-not $scriptDir) { $scriptDir = "." }
-    $localFile = Get-ChildItem -Path $scriptDir -Recurse -Filter $FileName -ErrorAction SilentlyContinue | Select-Object -First 1
+    # Use $PSScriptRoot if available, otherwise fall back to current dir
+    $searchRoot = if ($PSScriptRoot) { $PSScriptRoot } else { "." }
 
-    if ($localFile -and (Test-Path $localFile.FullName)) {
-        Copy-Item $localFile.FullName $Destination -Force
-        Write-Ok "$FileName (local: $($localFile.FullName)) -> $Destination"
-        return $true
-    }
+    # 1) Search in script directory + subfolders
+    try {
+        $localFile = Get-ChildItem -Path $searchRoot -Recurse -Filter $FileName -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($localFile -and (Test-Path $localFile.FullName)) {
+            Copy-Item $localFile.FullName $Destination -Force
+            Write-Ok "$FileName (local) -> $Destination"
+            return $true
+        }
+    } catch { }
 
     # 2) Search in current working directory + subfolders
-    $cwdFile = Get-ChildItem -Path "." -Recurse -Filter $FileName -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($cwdFile -and (Test-Path $cwdFile.FullName)) {
-        Copy-Item $cwdFile.FullName $Destination -Force
-        Write-Ok "$FileName (cwd: $($cwdFile.FullName)) -> $Destination"
-        return $true
-    }
+    try {
+        $cwdFile = Get-ChildItem -Path "." -Recurse -Filter $FileName -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($cwdFile -and (Test-Path $cwdFile.FullName)) {
+            Copy-Item $cwdFile.FullName $Destination -Force
+            Write-Ok "$FileName (cwd) -> $Destination"
+            return $true
+        }
+    } catch { }
 
     # 3) Download from GitHub repo
     $url = "$RepoBase/$FileName"
@@ -76,7 +77,7 @@ function Get-FileLocalOrRepo {
         Write-Ok "$FileName (downloaded) -> $Destination"
         return $true
     } catch {
-        Write-Host "  [FAIL] $FileName: $_" -ForegroundColor Red
+        Write-Fail "$FileName: $_"
         return $false
     }
 }
@@ -129,7 +130,32 @@ if ($failedBinaries.Count -gt 0) {
 }
 
 # ============================================================
-# Step 3: Add to PATH
+# Step 3: Verify critical binaries exist
+# ============================================================
+Write-Step "Verifying critical binaries"
+$criticalOk = $true
+if (-not (Test-Path "$InstallDir\crowdsec.exe")) {
+    Write-Fail "crowdsec.exe not found! Service will not work."
+    $criticalOk = $false
+} else {
+    Write-Ok "crowdsec.exe found"
+}
+if (-not (Test-Path "$InstallDir\cscli.exe")) {
+    Write-Fail "cscli.exe not found! CLI will not work."
+    $criticalOk = $false
+} else {
+    Write-Ok "cscli.exe found"
+}
+
+if (-not $criticalOk) {
+    Write-Host ""
+    Write-Fail "Critical binaries missing. Copy them to the script folder or ensure internet access."
+    Write-Host "  Download manually from: https://github.com/nayamura/CrowdsecWin" -ForegroundColor Yellow
+    Write-Host ""
+}
+
+# ============================================================
+# Step 4: Add to PATH
 # ============================================================
 Write-Step "Adding to system PATH"
 $currentPath = [Environment]::GetEnvironmentVariable("PATH", "Machine")
@@ -141,34 +167,37 @@ if ($currentPath -notlike "*$InstallDir*") {
 }
 
 # ============================================================
-# Step 4: Install NSSM (local zip first, then GitHub, then choco)
+# Step 5: Install NSSM (local zip first, then GitHub, then choco)
 # ============================================================
 Write-Step "Installing NSSM (service manager)"
 $nssmPath = "$InstallDir\nssm.exe"
-if (-not (Test-Path $nssmPath)) {
+if (Test-Path $nssmPath) {
+    Write-Ok "NSSM already exists at $nssmPath"
+} else {
     $nssmInstalled = $false
+    $searchRoot = if ($PSScriptRoot) { $PSScriptRoot } else { "." }
 
-    # 4a) Look for nssm.exe directly in local folders
-    $scriptDir = Split-Path -Parent $MyInvocation.ScriptName
-    if (-not $scriptDir) { $scriptDir = "." }
-    $localNssm = Get-ChildItem -Path $scriptDir -Recurse -Filter "nssm.exe" -ErrorAction SilentlyContinue | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
-    if (-not $localNssm) {
-        $localNssm = Get-ChildItem -Path "." -Recurse -Filter "nssm.exe" -ErrorAction SilentlyContinue | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
-    }
-    if ($localNssm -and (Test-Path $localNssm.FullName)) {
-        Copy-Item $localNssm.FullName $nssmPath -Force
-        Write-Ok "NSSM (local: $($localNssm.FullName)) -> $nssmPath"
-        $nssmInstalled = $true
-    }
-
-    # 4b) Look for nssm-2.24.zip locally, extract it
-    if (-not $nssmInstalled) {
-        $localZip = Get-ChildItem -Path $scriptDir -Recurse -Filter "nssm-2.24.zip" -ErrorAction SilentlyContinue | Select-Object -First 1
-        if (-not $localZip) {
-            $localZip = Get-ChildItem -Path "." -Recurse -Filter "nssm-2.24.zip" -ErrorAction SilentlyContinue | Select-Object -First 1
+    # 5a) Look for nssm.exe directly in local folders
+    try {
+        $localNssm = Get-ChildItem -Path $searchRoot -Recurse -Filter "nssm.exe" -ErrorAction SilentlyContinue | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
+        if (-not $localNssm) {
+            $localNssm = Get-ChildItem -Path "." -Recurse -Filter "nssm.exe" -ErrorAction SilentlyContinue | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
         }
-        if ($localZip -and (Test-Path $localZip.FullName)) {
-            try {
+        if ($localNssm -and (Test-Path $localNssm.FullName)) {
+            Copy-Item $localNssm.FullName $nssmPath -Force
+            Write-Ok "NSSM (local) -> $nssmPath"
+            $nssmInstalled = $true
+        }
+    } catch { }
+
+    # 5b) Look for nssm-2.24.zip locally, extract it
+    if (-not $nssmInstalled) {
+        try {
+            $localZip = Get-ChildItem -Path $searchRoot -Recurse -Filter "nssm-2.24.zip" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $localZip) {
+                $localZip = Get-ChildItem -Path "." -Recurse -Filter "nssm-2.24.zip" -ErrorAction SilentlyContinue | Select-Object -First 1
+            }
+            if ($localZip -and (Test-Path $localZip.FullName)) {
                 Expand-Archive -Path $localZip.FullName -DestinationPath "$env:TEMP\nssm" -Force
                 $nssmExe = Get-ChildItem "$env:TEMP\nssm" -Recurse -Filter "nssm.exe" | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
                 if ($nssmExe) {
@@ -177,16 +206,16 @@ if (-not (Test-Path $nssmPath)) {
                     $nssmInstalled = $true
                 }
                 Remove-Item "$env:TEMP\nssm" -Recurse -Force -ErrorAction SilentlyContinue
-            } catch {
-                Write-Warn "Failed to extract local NSSM zip: $_"
             }
+        } catch {
+            Write-Warn "Failed to extract local NSSM zip: $_"
         }
     }
 
-    # 4c) Download zip from GitHub
+    # 5c) Download zip from GitHub
     if (-not $nssmInstalled) {
-        $nssmZip = "$env:TEMP\nssm.zip"
         try {
+            $nssmZip = "$env:TEMP\nssm.zip"
             Write-Host "  Downloading NSSM from GitHub..." -ForegroundColor Gray
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             Invoke-WebRequest -Uri "https://github.com/nayamura/CrowdsecWin/raw/main/nssm-2.24.zip" -OutFile $nssmZip -UseBasicParsing -TimeoutSec 60
@@ -204,38 +233,45 @@ if (-not (Test-Path $nssmPath)) {
         }
     }
 
-    # 4d) Fallback: Chocolatey
+    # 5d) Fallback: Chocolatey
     if (-not $nssmInstalled) {
         Write-Warn "Trying Chocolatey as fallback..."
         try {
-            choco install -y nssm 2>$null
-            Write-Ok "NSSM installed via Chocolatey"
+            $choco = Get-Command choco -ErrorAction SilentlyContinue
+            if ($choco) {
+                choco install -y nssm
+                Write-Ok "NSSM installed via Chocolatey"
+            } else {
+                Write-Warn "Chocolatey not installed. Install from https://chocolatey.org"
+            }
         } catch {
             Write-Warn "All NSSM install methods failed. Install manually: choco install -y nssm"
         }
     }
-} else {
-    Write-Ok "NSSM already exists at $nssmPath"
 }
 
 # ============================================================
-# Step 5: Create Windows Service
+# Step 6: Create Windows Service
 # ============================================================
 Write-Step "Creating CrowdSec Windows Service"
 if (Test-Path $nssmPath) {
-    & $nssmPath install CrowdSec "$InstallDir\crowdsec.exe" 2>$null
-    & $nssmPath set CrowdSec AppDirectory $InstallDir 2>$null
-    & $nssmPath set CrowdSec DisplayName "CrowdSec Guardian" 2>$null
-    & $nssmPath set CrowdSec Description "CrowdSec Security Engine - CAPI: $CAPIUrl" 2>$null
-    & $nssmPath set CrowdSec Start SERVICE_AUTO_START 2>$null
-    & $nssmPath set CrowdSec ObjectName LocalSystem 2>$null
-    Write-Ok "Service 'CrowdSec Guardian' created"
+    if (Test-Path "$InstallDir\crowdsec.exe") {
+        & $nssmPath install CrowdSec "$InstallDir\crowdsec.exe" 2>$null
+        & $nssmPath set CrowdSec AppDirectory $InstallDir 2>$null
+        & $nssmPath set CrowdSec DisplayName "CrowdSec Guardian" 2>$null
+        & $nssmPath set CrowdSec Description "CrowdSec Security Engine - CAPI: $CAPIUrl" 2>$null
+        & $nssmPath set CrowdSec Start SERVICE_AUTO_START 2>$null
+        & $nssmPath set CrowdSec ObjectName LocalSystem 2>$null
+        Write-Ok "Service 'CrowdSec Guardian' created"
+    } else {
+        Write-Warn "crowdsec.exe not found, skipping service creation"
+    }
 } else {
     Write-Warn "NSSM not available, skipping service creation"
 }
 
 # ============================================================
-# Step 6: Create basic config
+# Step 7: Create basic config
 # ============================================================
 Write-Step "Creating basic config"
 $configContent = @"
@@ -270,7 +306,7 @@ $configContent | Out-File -FilePath "$DataDir\config\config.yaml" -Encoding UTF8
 Write-Ok "Config created at $DataDir\config\config.yaml"
 
 # ============================================================
-# Step 7: Start service
+# Step 8: Start service
 # ============================================================
 Write-Step "Starting CrowdSec Guardian"
 try {
@@ -282,7 +318,7 @@ try {
 }
 
 # ============================================================
-# Step 8: Verify
+# Step 9: Verify
 # ============================================================
 Write-Step "Verification"
 Start-Sleep -Seconds 3
@@ -293,26 +329,25 @@ if ($service) {
     Write-Warn "Service not found"
 }
 
-Write-Host @"
-
-========================================
-  CrowdSec Guardian Installation Complete!
-========================================
-
-  Install Dir:  $InstallDir
-  Data Dir:     $DataDir
-  CAPI URL:     $CAPIUrl
-
-  Next steps:
-  1. Register agent:     cscli machines add
-  2. Register CAPI:      cscli capi register
-  3. Check status:       cscli machines list
-  4. View alerts:        cscli alerts list
-
-  Service commands:
-    Start:   Start-Service CrowdSec
-    Stop:    Stop-Service CrowdSec
-    Status:  Get-Service CrowdSec
-
-========================================
-"@ -ForegroundColor Green
+Write-Host ""
+Write-Host "========================================"
+Write-Host "  CrowdSec Guardian Installation Complete!"
+Write-Host "========================================"
+Write-Host ""
+Write-Host "  Install Dir:  $InstallDir"
+Write-Host "  Data Dir:     $DataDir"
+Write-Host "  CAPI URL:     $CAPIUrl"
+Write-Host ""
+Write-Host "  Next steps:"
+Write-Host "  1. Register agent:     cscli machines add"
+Write-Host "  2. Register CAPI:      cscli capi register"
+Write-Host "  3. Check status:       cscli machines list"
+Write-Host "  4. View alerts:        cscli alerts list"
+Write-Host ""
+Write-Host "  Service commands:"
+Write-Host "    Start:   Start-Service CrowdSec"
+Write-Host "    Stop:    Stop-Service CrowdSec"
+Write-Host "    Status:  Get-Service CrowdSec"
+Write-Host ""
+Write-Host "========================================"
+Write-Host ""
