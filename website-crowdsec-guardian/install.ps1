@@ -1,6 +1,6 @@
 # CrowdSec Guardian - Automated Windows Installer
 # Run this script in PowerShell as Administrator
-# Usage: .\install.ps1
+# Usage: powershell -ExecutionPolicy Bypass -File install.ps1
 
 param(
     [string]$InstallDir = "C:\Program Files\CrowdSec",
@@ -45,8 +45,13 @@ function Get-FileLocalOrRepo {
         [string]$RepoBase = "https://github.com/nayamura/CrowdsecWin/raw/main"
     )
 
-    # Use $PSScriptRoot if available, otherwise fall back to current dir
-    $searchRoot = if ($PSScriptRoot) { $PSScriptRoot } else { "." }
+    # Determine script directory
+    $searchRoot = "."
+    if ($PSScriptRoot -and (Test-Path $PSScriptRoot)) {
+        $searchRoot = $PSScriptRoot
+    } elseif ($MyInvocation -and $MyInvocation.MyCommand -and $MyInvocation.MyCommand.Path) {
+        $searchRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+    }
 
     # 1) Search in script directory + subfolders
     try {
@@ -77,7 +82,7 @@ function Get-FileLocalOrRepo {
         Write-Ok "$FileName (downloaded) -> $Destination"
         return $true
     } catch {
-        Write-Fail "$FileName: $_"
+        Write-Fail "$FileName : $_"
         return $false
     }
 }
@@ -86,20 +91,22 @@ function Get-FileLocalOrRepo {
 # Step 1: Create directories
 # ============================================================
 Write-Step "Creating directories"
-@($InstallDir,
-  "$DataDir\config",
-  "$DataDir\config\notifications",
-  "$DataDir\config\console",
-  "$DataDir\patterns",
-  "$DataDir\hub",
-  "$DataDir\data",
-  "$InstallDir\plugins"
-) | ForEach-Object {
-    if (-not (Test-Path $_)) {
-        New-Item -ItemType Directory -Path $_ -Force | Out-Null
-        Write-Ok "Created: $_"
+$dirs = @(
+    $InstallDir,
+    "$DataDir\config",
+    "$DataDir\config\notifications",
+    "$DataDir\config\console",
+    "$DataDir\patterns",
+    "$DataDir\hub",
+    "$DataDir\data",
+    "$InstallDir\plugins"
+)
+foreach ($d in $dirs) {
+    if (-not (Test-Path $d)) {
+        New-Item -ItemType Directory -Path $d -Force | Out-Null
+        Write-Ok "Created: $d"
     } else {
-        Write-Ok "Exists:  $_"
+        Write-Ok "Exists:  $d"
     }
 }
 
@@ -175,7 +182,14 @@ if (Test-Path $nssmPath) {
     Write-Ok "NSSM already exists at $nssmPath"
 } else {
     $nssmInstalled = $false
-    $searchRoot = if ($PSScriptRoot) { $PSScriptRoot } else { "." }
+
+    # Determine search root
+    $searchRoot = "."
+    if ($PSScriptRoot -and (Test-Path $PSScriptRoot)) {
+        $searchRoot = $PSScriptRoot
+    } elseif ($MyInvocation -and $MyInvocation.MyCommand -and $MyInvocation.MyCommand.Path) {
+        $searchRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+    }
 
     # 5a) Look for nssm.exe directly in local folders
     try {
@@ -274,35 +288,36 @@ if (Test-Path $nssmPath) {
 # Step 7: Create basic config
 # ============================================================
 Write-Step "Creating basic config"
-$configContent = @"
-# CrowdSec Guardian Configuration
-# CAPI: $CAPIUrl
 
-api:
-  server:
-    listen_uri: 127.0.0.1:8080
-  client:
-    credentials_path: $DataDir/config/local_api_credentials.yaml
+$configLines = @(
+    "# CrowdSec Guardian Configuration",
+    "# CAPI: $CAPIUrl",
+    "",
+    "api:",
+    "  server:",
+    "    listen_uri: 127.0.0.1:8080",
+    "  client:",
+    "    credentials_path: $DataDir/config/local_api_credentials.yaml",
+    "",
+    "common:",
+    "  log_dir: $DataDir/log",
+    "  log_mode: file",
+    "  log_level: info",
+    "",
+    "db:",
+    "  type: sqlite",
+    "  path: $DataDir/data/crowdsec.db",
+    "",
+    "plugin_config:",
+    "  notification_dir: $DataDir/config/notifications",
+    "  console_dir: $DataDir/config/console",
+    "",
+    "crowdsec_service:",
+    "  enable: true",
+    "  acquisition_dir: $DataDir/config"
+)
 
-common:
-  log_dir: $DataDir/log
-  log_mode: file
-  log_level: info
-
-db:
-  type: sqlite
-  path: $DataDir/data/crowdsec.db
-
-plugin_config:
-  notification_dir: $DataDir/config/notifications
-  console_dir: $DataDir/config/console
-
-crowdsec_service:
-  enable: true
-  acquisition_dir: $DataDir/config
-"@
-
-$configContent | Out-File -FilePath "$DataDir\config\config.yaml" -Encoding UTF8
+$configLines | Out-File -FilePath "$DataDir\config\config.yaml" -Encoding UTF8
 Write-Ok "Config created at $DataDir\config\config.yaml"
 
 # ============================================================
