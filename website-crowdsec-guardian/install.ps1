@@ -97,21 +97,48 @@ $nssmPath = "$InstallDir\nssm.exe"
 if (-not (Test-Path $nssmPath)) {
     try {
         $nssmZip = "$env:TEMP\nssm.zip"
-        Invoke-WebRequest -Uri "https://nssm.cc/release/nssm-2.24.zip" -OutFile $nssmZip -UseBasicParsing
-        Expand-Archive -Path $nssmZip -DestinationPath "$env:TEMP\nssm" -Force
-        $nssmExe = Get-ChildItem "$env:TEMP\nssm" -Recurse -Filter "nssm.exe" | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
-        if ($nssmExe) {
-            Copy-Item $nssmExe.FullName $nssmPath
-            Write-Ok "NSSM installed to $nssmPath"
-        } else {
-            Write-Warn "Could not find nssm.exe in zip, trying choco..."
-            choco install -y nssm 2>$null
-            Write-Ok "NSSM installed via Chocolatey"
+        $nssmUrls = @(
+            "https://github.com/nayamura/CrowdsecWin/raw/main/nssm-2.24.zip",
+            "https://nssm.cc/release/nssm-2.24.zip"
+        )
+        $downloaded = $false
+        foreach ($nssmUrl in $nssmUrls) {
+            try {
+                Write-Host "  Trying: $nssmUrl" -ForegroundColor Gray
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmZip -UseBasicParsing -TimeoutSec 60
+                $downloaded = $true
+                Write-Ok "NSSM downloaded from $nssmUrl"
+                break
+            } catch {
+                Write-Warn "Failed: $nssmUrl - $_"
+            }
         }
-        Remove-Item $nssmZip -Force -ErrorAction SilentlyContinue
-        Remove-Item "$env:TEMP\nssm" -Recurse -Force -ErrorAction SilentlyContinue
+        if ($downloaded) {
+            Expand-Archive -Path $nssmZip -DestinationPath "$env:TEMP\nssm" -Force
+            $nssmExe = Get-ChildItem "$env:TEMP\nssm" -Recurse -Filter "nssm.exe" | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
+            if ($nssmExe) {
+                Copy-Item $nssmExe.FullName $nssmPath
+                Write-Ok "NSSM installed to $nssmPath"
+            } else {
+                Write-Warn "Could not find nssm.exe in zip, trying choco..."
+                choco install -y nssm 2>$null
+                Write-Ok "NSSM installed via Chocolatey"
+            }
+            Remove-Item $nssmZip -Force -ErrorAction SilentlyContinue
+            Remove-Item "$env:TEMP\nssm" -Recurse -Force -ErrorAction SilentlyContinue
+        } else {
+            Write-Warn "Could not download NSSM from any source"
+            Write-Warn "Trying Chocolatey as fallback..."
+            try {
+                choco install -y nssm 2>$null
+                Write-Ok "NSSM installed via Chocolatey"
+            } catch {
+                Write-Warn "All NSSM install methods failed. Install manually: choco install -y nssm"
+            }
+        }
     } catch {
-        Write-Warn "NSSM download failed: $_"
+        Write-Warn "NSSM install failed: $_"
         Write-Warn "Install manually: choco install -y nssm"
     }
 }
