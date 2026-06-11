@@ -1,0 +1,9 @@
+=== Creating CrowdSec Windows Service ===
+  [WARN] Removing existing CrowdSec service...
+  Installing service...
+nssm.exe : N S S M :   T h e   n o n - s u c k i n g   s e r v i c e   m a n a g e r
+At C:\Users\Administrator\Desktop\CrowdsecWin-main\CrowdsecWin-main\website-crowdsec-guardian\install.ps1:343 char:9
++         & $nssmPath set CrowdSec AppParameters "" 2>&1 | Out-Null
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (N S S M :   T h... m a n a g e r :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
