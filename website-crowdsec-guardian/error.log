@@ -1,50 +1,28 @@
-=== Installing NSSM (service manager) ===
-  [OK] NSSM already exists at C:\Program Files\CrowdSec\nssm.exe
-
-=== Testing crowdsec.exe ===
-  [OK] crowdsec.exe version: version: v1.0.0-custom-b962bc0 Codename: alphaga BuildDate: 2026-06-10 GoVersion: 1.26.1 Platform: windows libre2: WebAssembly User-Agent: crowdsec/v1.0.0-custom-b962bc0-windows Constraint_parser: >= 1.0, <= 3.0 Constraint_scenario: >= 1.0, <= 3.0 Constraint_api: v1 Constraint_acquis: >= 1.0, < 2.0 Built-in optional components: datasource_appsec, datasource_cloudwatch, datasource_docker, datasource_file, datasource_http, datasource_journalctl, datasource_k8s-audit, datasource_kafka, datasource_kinesis, datasource_loki, datasource_s3, datasource_syslog, datasource_victorialogs, datasource_wineventlog, db_mysql, db_postgres, db_sqlite Excluded components: cscli_setup
-
 === Creating CrowdSec Windows Service ===
   Installing service...
-    stderr: 'C:\Program' is not recognized as an internal or external command, operable program or batch file.
-  [WARN] NSSM exit code: 1
-    stderr: 'C:\Program' is not recognized as an internal or external command, operable program or batch file.
-  [WARN] NSSM exit code: 1
-    stderr: 'C:\Program' is not recognized as an internal or external command, operable program or batch file.
-  [WARN] NSSM exit code: 1
-    stderr: 'C:\Program' is not recognized as an internal or external command, operable program or batch file.
-  [WARN] NSSM exit code: 1
-    stderr: 'C:\Program' is not recognized as an internal or external command, operable program or batch file.
-  [WARN] NSSM exit code: 1
-    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
-  [WARN] NSSM exit code: 3
-    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
-  [WARN] NSSM exit code: 3
-    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
-  [WARN] NSSM exit code: 3
-    stderr: 'C:\Program' is not recognized as an internal or external command, operable program or batch file.
-  [WARN] NSSM exit code: 1
-    stderr: 'C:\Program' is not recognized as an internal or external command, operable program or batch file.
-  [WARN] NSSM exit code: 1
-    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
-  [WARN] NSSM exit code: 3
-    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
-  [WARN] NSSM exit code: 3
-    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
-  [WARN] NSSM exit code: 3
-    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
-  [WARN] NSSM exit code: 3
-    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
-  [WARN] NSSM exit code: 3
-    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
-  [WARN] NSSM exit code: 3
+    stdout: S e r v i c e   " C r o w d S e c "   i n s t a l l e d   s u c c e s s f u l l y ! ,  ,  ,
+    stdout: S e t   p a r a m e t e r   " A p p D i r e c t o r y "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
+  [WARN] NSSM failed: Cannot validate argument on parameter 'ArgumentList'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.
+    stdout: S e t   p a r a m e t e r   " D i s p l a y N a m e "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
+    stdout: S e t   p a r a m e t e r   " D e s c r i p t i o n "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
+    stdout: S e t   p a r a m e t e r   " S t a r t "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
+    stdout: R e s e t   p a r a m e t e r   " O b j e c t N a m e "   f o r   s e r v i c e   " C r o w d S e c "   t o   i t s   d e f a u l t . ,  ,  ,
+    stdout: S e t   p a r a m e t e r   " T y p e "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
+    stdout: S e t   p a r a m e t e r   " A p p S t d o u t "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
+    stdout: S e t   p a r a m e t e r   " A p p S t d e r r "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
+    stdout: R e s e t   p a r a m e t e r   " A p p S t d o u t C r e a t i o n D i s p o s i t i o n "   f o r   s e r v i c e   " C r o w d S e c "   t o   i t s   d e f a u l t . ,  ,  ,
+    stdout: R e s e t   p a r a m e t e r   " A p p S t d e r r C r e a t i o n D i s p o s i t i o n "   f o r   s e r v i c e   " C r o w d S e c "   t o   i t s   d e f a u l t . ,  ,  ,
+    stdout: S e t   p a r a m e t e r   " A p p R o t a t e F i l e s "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
+    stdout: S e t   p a r a m e t e r   " A p p R o t a t e B y t e s "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
+    stdout: R e s e t   p a r a m e t e r   " A p p E x i t "   f o r   s e r v i c e   " C r o w d S e c "   t o   i t s   d e f a u l t . ,  ,  ,
+    stdout: S e t   p a r a m e t e r   " A p p R e s t a r t D e l a y "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
   [OK] Service 'CrowdSec Guardian' created
 
 === Creating basic config ===
   [OK] Config created at C:\ProgramData\CrowdSec\config\config.yaml
 
 === Starting CrowdSec Guardian ===
-  [FAIL] Could not start service: Cannot find any service with service name 'CrowdSec'.
+  [FAIL] Could not start service: Failed to start service 'CrowdSec Guardian (CrowdSec)'.
 
   Troubleshooting steps:
   1. Check service logs:
@@ -60,7 +38,7 @@
 
 
 === Verification ===
-  [WARN] Service not found
+  [OK] Service status: Stopped
 
 ========================================
   CrowdSec Guardian Installation Complete!
