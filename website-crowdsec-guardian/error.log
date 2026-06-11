@@ -6,31 +6,48 @@
 
 === Creating CrowdSec Windows Service ===
   Installing service...
-    stdout: S e r v i c e   " C r o w d S e c "   i n s t a l l e d   s u c c e s s f u l l y ! ,  ,  ,
-    stdout: S e t   p a r a m e t e r   " A p p D i r e c t o r y "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
-    stdout: S e t   p a r a m e t e r   " D i s p l a y N a m e "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
-    stdout: S e t   p a r a m e t e r   " D e s c r i p t i o n "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
-    stdout: S e t   p a r a m e t e r   " S t a r t "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
-    stdout: R e s e t   p a r a m e t e r   " O b j e c t N a m e "   f o r   s e r v i c e   " C r o w d S e c "   t o   i t s   d e f a u l t . ,  ,  ,
-    stdout: S e t   p a r a m e t e r   " T y p e "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
-    stdout: S e t   p a r a m e t e r   " A p p S t d o u t "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
-    stdout: S e t   p a r a m e t e r   " A p p S t d e r r "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
-    stdout: R e s e t   p a r a m e t e r   " A p p S t d o u t C r e a t i o n D i s p o s i t i o n "   f o r   s e r v i c e   " C r o w d S e c "   t o   i t s   d e f a u l t . ,  ,  ,
-    stdout: R e s e t   p a r a m e t e r   " A p p S t d e r r C r e a t i o n D i s p o s i t i o n "   f o r   s e r v i c e   " C r o w d S e c "   t o   i t s   d e f a u l t . ,  ,  ,
-    stdout: S e t   p a r a m e t e r   " A p p R o t a t e F i l e s "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
-    stdout: S e t   p a r a m e t e r   " A p p R o t a t e B y t e s "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
-    stdout: R e s e t   p a r a m e t e r   " A p p E x i t "   f o r   s e r v i c e   " C r o w d S e c "   t o   i t s   d e f a u l t . ,  ,  ,
-    stdout: S e t   p a r a m e t e r   " A p p R e s t a r t D e l a y "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
+    stderr: 'C:\Program' is not recognized as an internal or external command,, operable program or batch file.
+  [WARN] NSSM exit code: 1
+    stderr: 'C:\Program' is not recognized as an internal or external command,, operable program or batch file.
+  [WARN] NSSM exit code: 1
+    stderr: 'C:\Program' is not recognized as an internal or external command,, operable program or batch file.
+  [WARN] NSSM exit code: 1
+    stderr: 'C:\Program' is not recognized as an internal or external command,, operable program or batch file.
+  [WARN] NSSM exit code: 1
+    stderr: 'C:\Program' is not recognized as an internal or external command,, operable program or batch file.
+  [WARN] NSSM exit code: 1
+    stderr: C a n ' t   o p e n   s e r v i c e ! ,  ,  ,  O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s  r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e . ,  ,  ,  ,  ,  ,
+  [WARN] NSSM exit code: 3
+    stderr: C a n ' t   o p e n   s e r v i c e ! ,  ,  ,  O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s  r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e . ,  ,  ,  ,  ,  ,
+  [WARN] NSSM exit code: 3
+    stderr: C a n ' t   o p e n   s e r v i c e ! ,  ,  ,  O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s  r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e . ,  ,  ,  ,  ,  ,
+  [WARN] NSSM exit code: 3
+    stderr: 'C:\Program' is not recognized as an internal or external command,, operable program or batch file.
+  [WARN] NSSM exit code: 1
+    stderr: 'C:\Program' is not recognized as an internal or external command,, operable program or batch file.
+  [WARN] NSSM exit code: 1
+    stderr: C a n ' t   o p e n   s e r v i c e ! ,  ,  ,  O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s  r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e . ,  ,  ,  ,  ,  ,
+  [WARN] NSSM exit code: 3
+    stderr: C a n ' t   o p e n   s e r v i c e ! ,  ,  ,  O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s  r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e . ,  ,  ,  ,  ,  ,
+  [WARN] NSSM exit code: 3
+    stderr: C a n ' t   o p e n   s e r v i c e ! ,  ,  ,  O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s  r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e . ,  ,  ,  ,  ,  ,
+  [WARN] NSSM exit code: 3
+    stderr: C a n ' t   o p e n   s e r v i c e ! ,  ,  ,  O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s  r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e . ,  ,  ,  ,  ,  ,
+  [WARN] NSSM exit code: 3
+    stderr: C a n ' t   o p e n   s e r v i c e ! ,  ,  ,  O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s  r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e . ,  ,  ,  ,  ,  ,
+  [WARN] NSSM exit code: 3
+    stderr: C a n ' t   o p e n   s e r v i c e ! ,  ,  ,  O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s  r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e . ,  ,  ,  ,  ,  ,
+  [WARN] NSSM exit code: 3
   [OK] Service 'CrowdSec Guardian' created
 
 === Creating basic config ===
   [OK] Config created at C:\ProgramData\CrowdSec\config\config.yaml
 
 === Starting CrowdSec Guardian ===
-  [WARN] Start-Service failed: Failed to start service 'CrowdSec Guardian (CrowdSec)'.
+  [WARN] Start-Service failed: Cannot find any service with service name 'CrowdSec'.
   Trying NSSM start...
-    stderr: C r o w d S e c :   U n e x p e c t e d   s t a t u s   S E R V I C E _ S T O P P E D   i n   r e s p o n s e   t o   S T A R T   c o n t r o l . ,  ,  ,
-  [WARN] NSSM exit code: 1
+    stderr: C a n ' t   o p e n   s e r v i c e ! ,  ,  ,  O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s  r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e . ,  ,  ,  ,  ,  ,
+  [WARN] NSSM exit code: 3
   [FAIL] Could not start service
 
   Manual troubleshooting:
@@ -42,7 +59,7 @@
 
 
 === Verification ===
-  [OK] Service status: Stopped
+  [WARN] Service not found
 
 ========================================
   CrowdSec Guardian Installation Complete!
