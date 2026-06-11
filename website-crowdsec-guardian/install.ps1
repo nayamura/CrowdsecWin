@@ -332,32 +332,32 @@ if (Test-Path $nssmPath) {
         $existing = Get-Service CrowdSec -ErrorAction SilentlyContinue
         if ($existing) {
             Write-Warn "Removing existing CrowdSec service..."
-            & $nssmPath remove CrowdSec confirm 2>&1 | Out-Null
+            & $nssmPath remove CrowdSec confirm 2>$null | Out-Null
             Start-Sleep -Seconds 2
         }
 
-        # Install service with NSSM
+        # Install service with NSSM - use 2>$null to avoid RemoteException from stderr
         Write-Host "  Installing service..." -ForegroundColor Gray
-        & $nssmPath install CrowdSec $crowdsecExe 2>&1 | Out-Null
-        & $nssmPath set CrowdSec AppDirectory $InstallDir 2>&1 | Out-Null
-        & $nssmPath set CrowdSec AppParameters "" 2>&1 | Out-Null
-        & $nssmPath set CrowdSec DisplayName "CrowdSec Guardian" 2>&1 | Out-Null
-        & $nssmPath set CrowdSec Description "CrowdSec Security Engine - CAPI: $CAPIUrl" 2>&1 | Out-Null
-        & $nssmPath set CrowdSec Start SERVICE_AUTO_START 2>&1 | Out-Null
-        & $nssmPath set CrowdSec ObjectName LocalSystem 2>&1 | Out-Null
-        & $nssmPath set CrowdSec Type SERVICE_WIN32_OWN_PROCESS 2>&1 | Out-Null
+        & $nssmPath install CrowdSec $crowdsecExe 2>$null | Out-Null
+        & $nssmPath set CrowdSec AppDirectory $InstallDir 2>$null | Out-Null
+        & $nssmPath set CrowdSec AppParameters "" 2>$null | Out-Null
+        & $nssmPath set CrowdSec DisplayName "CrowdSec Guardian" 2>$null | Out-Null
+        & $nssmPath set CrowdSec Description "CrowdSec Security Engine - CAPI: $CAPIUrl" 2>$null | Out-Null
+        & $nssmPath set CrowdSec Start SERVICE_AUTO_START 2>$null | Out-Null
+        & $nssmPath set CrowdSec ObjectName LocalSystem 2>$null | Out-Null
+        & $nssmPath set CrowdSec Type SERVICE_WIN32_OWN_PROCESS 2>$null | Out-Null
 
         # Set stdout/stderr log files so we can debug failures
-        & $nssmPath set CrowdSec AppStdout "$DataDir\log\service_stdout.log" 2>&1 | Out-Null
-        & $nssmPath set CrowdSec AppStderr "$DataDir\log\service_stderr.log" 2>&1 | Out-Null
-        & $nssmPath set CrowdSec AppStdoutCreationDisposition 4 2>&1 | Out-Null
-        & $nssmPath set CrowdSec AppStderrCreationDisposition 4 2>&1 | Out-Null
-        & $nssmPath set CrowdSec AppRotateFiles 1 2>&1 | Out-Null
-        & $nssmPath set CrowdSec AppRotateBytes 10485760 2>&1 | Out-Null
+        & $nssmPath set CrowdSec AppStdout "$DataDir\log\service_stdout.log" 2>$null | Out-Null
+        & $nssmPath set CrowdSec AppStderr "$DataDir\log\service_stderr.log" 2>$null | Out-Null
+        & $nssmPath set CrowdSec AppStdoutCreationDisposition 4 2>$null | Out-Null
+        & $nssmPath set CrowdSec AppStderrCreationDisposition 4 2>$null | Out-Null
+        & $nssmPath set CrowdSec AppRotateFiles 1 2>$null | Out-Null
+        & $nssmPath set CrowdSec AppRotateBytes 10485760 2>$null | Out-Null
 
         # Set restart action: restart on failure
-        & $nssmPath set CrowdSec AppExit Default Restart 2>&1 | Out-Null
-        & $nssmPath set CrowdSec AppRestartDelay 5000 2>&1 | Out-Null
+        & $nssmPath set CrowdSec AppExit Default Restart 2>$null | Out-Null
+        & $nssmPath set CrowdSec AppRestartDelay 5000 2>$null | Out-Null
 
         Write-Ok "Service 'CrowdSec Guardian' created"
     } else {
