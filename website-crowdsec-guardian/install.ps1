@@ -173,6 +173,26 @@ if ($currentPath -notlike "*$InstallDir*") {
     Write-Ok "Already in PATH"
 }
 
+# Helper: Print full error details including inner exceptions
+function Show-FullError {
+    param([string]$Context, $Exception)
+    Write-Fail "$Context"
+    $ex = $Exception.Exception
+    $level = 0
+    while ($ex) {
+        Write-Host "  [Error $level] $($ex.GetType().FullName)" -ForegroundColor Red
+        Write-Host "  Message: $($ex.Message)" -ForegroundColor Red
+        if ($ex.StackTrace) {
+            Write-Host "  Stack: $($ex.StackTrace.Split("`n")[0])" -ForegroundColor DarkRed
+        }
+        $ex = $ex.InnerException
+        $level++
+    }
+    if ($Exception.ScriptStackTrace) {
+        Write-Host "  Script Stack: $($Exception.ScriptStackTrace)" -ForegroundColor DarkRed
+    }
+}
+
 # ============================================================
 # Step 5: Install NSSM (local zip first, then GitHub, then choco)
 # ============================================================
@@ -193,36 +213,44 @@ if (Test-Path $nssmPath) {
 
     # 5a) Look for nssm.exe directly in local folders
     try {
-        $localNssm = Get-ChildItem -Path $searchRoot -Recurse -Filter "nssm.exe" -ErrorAction SilentlyContinue | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
-        if (-not $localNssm) {
-            $localNssm = Get-ChildItem -Path "." -Recurse -Filter "nssm.exe" -ErrorAction SilentlyContinue | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
+        $localNssmExe = Get-ChildItem -Path $searchRoot -Recurse -Filter "nssm.exe" -ErrorAction SilentlyContinue | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
+        if (-not $localNssmExe) {
+            $localNssmExe = Get-ChildItem -Path "." -Recurse -Filter "nssm.exe" -ErrorAction SilentlyContinue | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
         }
-        if ($localNssm -and (Test-Path $localNssm.FullName)) {
-            Copy-Item $localNssm.FullName $nssmPath -Force
+        if ($localNssmExe -and (Test-Path $localNssmExe.FullName)) {
+            Copy-Item $localNssmExe.FullName $nssmPath -Force
             Write-Ok "NSSM (local) -> $nssmPath"
             $nssmInstalled = $true
         }
-    } catch { }
+    } catch {
+        Show-FullError -Context "5a) Local nssm.exe search failed" -Exception $_
+    }
 
     # 5b) Look for nssm-2.24.zip locally, extract it
     if (-not $nssmInstalled) {
         try {
-            $localZip = Get-ChildItem -Path $searchRoot -Recurse -Filter "nssm-2.24.zip" -ErrorAction SilentlyContinue | Select-Object -First 1
-            if (-not $localZip) {
-                $localZip = Get-ChildItem -Path "." -Recurse -Filter "nssm-2.24.zip" -ErrorAction SilentlyContinue | Select-Object -First 1
+            $localZipFile = Get-ChildItem -Path $searchRoot -Recurse -Filter "nssm-2.24.zip" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $localZipFile) {
+                $localZipFile = Get-ChildItem -Path "." -Recurse -Filter "nssm-2.24.zip" -ErrorAction SilentlyContinue | Select-Object -First 1
             }
-            if ($localZip -and (Test-Path $localZip.FullName)) {
-                Expand-Archive -Path $localZip.FullName -DestinationPath "$env:TEMP\nssm" -Force
-                $nssmExe = Get-ChildItem "$env:TEMP\nssm" -Recurse -Filter "nssm.exe" | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
-                if ($nssmExe) {
-                    Copy-Item $nssmExe.FullName $nssmPath
+            if ($localZipFile -and (Test-Path $localZipFile.FullName)) {
+                $tempExtract = "$env:TEMP\nssm_extract"
+                if (Test-Path $tempExtract) { Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue }
+                Expand-Archive -Path $localZipFile.FullName -DestinationPath $tempExtract -Force
+                $nssmFromZip = Get-ChildItem $tempExtract -Recurse -Filter "nssm.exe" | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
+                if ($nssmFromZip) {
+                    Copy-Item $nssmFromZip.FullName $nssmPath -Force
                     Write-Ok "NSSM (extracted from local zip) -> $nssmPath"
                     $nssmInstalled = $true
+                } else {
+                    Write-Warn "nssm.exe not found inside local zip (no win64 folder)"
                 }
-                Remove-Item "$env:TEMP\nssm" -Recurse -Force -ErrorAction SilentlyContinue
+                Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
+            } else {
+                Write-Host "  nssm-2.24.zip not found locally" -ForegroundColor Gray
             }
         } catch {
-            Write-Warn "Failed to extract local NSSM zip: $_"
+            Show-FullError -Context "5b) Local NSSM zip extraction failed" -Exception $_
         }
     }
 
@@ -232,18 +260,22 @@ if (Test-Path $nssmPath) {
             $nssmZip = "$env:TEMP\nssm.zip"
             Write-Host "  Downloading NSSM from GitHub..." -ForegroundColor Gray
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Invoke-WebRequest -Uri "https://github.com/nayamura/CrowdsecWin/raw/main/nssm-2.24.zip" -OutFile $nssmZip -UseBasicParsing -TimeoutSec 60
-            Expand-Archive -Path $nssmZip -DestinationPath "$env:TEMP\nssm" -Force
-            $nssmExe = Get-ChildItem "$env:TEMP\nssm" -Recurse -Filter "nssm.exe" | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
-            if ($nssmExe) {
-                Copy-Item $nssmExe.FullName $nssmPath
+            Invoke-WebRequest -Uri "https://github.com/nayamura/CrowdsecWin/raw/main/nssm-2.24.zip" -OutFile $nssmZip -UseBasicParsing -TimeoutSec 120
+            $tempExtract = "$env:TEMP\nssm_download"
+            if (Test-Path $tempExtract) { Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue }
+            Expand-Archive -Path $nssmZip -DestinationPath $tempExtract -Force
+            $nssmFromZip = Get-ChildItem $tempExtract -Recurse -Filter "nssm.exe" | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
+            if ($nssmFromZip) {
+                Copy-Item $nssmFromZip.FullName $nssmPath -Force
                 Write-Ok "NSSM (downloaded + extracted) -> $nssmPath"
                 $nssmInstalled = $true
+            } else {
+                Write-Warn "nssm.exe not found inside downloaded zip (no win64 folder)"
             }
             Remove-Item $nssmZip -Force -ErrorAction SilentlyContinue
-            Remove-Item "$env:TEMP\nssm" -Recurse -Force -ErrorAction SilentlyContinue
+            Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
         } catch {
-            Write-Warn "NSSM download failed: $_"
+            Show-FullError -Context "5c) NSSM download from GitHub failed" -Exception $_
         }
     }
 
@@ -251,16 +283,25 @@ if (Test-Path $nssmPath) {
     if (-not $nssmInstalled) {
         Write-Warn "Trying Chocolatey as fallback..."
         try {
-            $choco = Get-Command choco -ErrorAction SilentlyContinue
-            if ($choco) {
+            $chocoCmd = Get-Command choco -ErrorAction SilentlyContinue
+            if ($chocoCmd) {
                 choco install -y nssm
                 Write-Ok "NSSM installed via Chocolatey"
             } else {
                 Write-Warn "Chocolatey not installed. Install from https://chocolatey.org"
             }
         } catch {
-            Write-Warn "All NSSM install methods failed. Install manually: choco install -y nssm"
+            Show-FullError -Context "5d) Chocolatey NSSM install failed" -Exception $_
         }
+    }
+
+    # Final check
+    if (-not $nssmInstalled) {
+        Write-Fail "NSSM could not be installed by any method!"
+        Write-Host ""
+        Write-Host "  Manual fix: download nssm-2.24.zip from https://nssm.cc/release/nssm-2.24.zip" -ForegroundColor Yellow
+        Write-Host "  Extract nssm.exe (win64 folder) to: $nssmPath" -ForegroundColor Yellow
+        Write-Host ""
     }
 }
 
