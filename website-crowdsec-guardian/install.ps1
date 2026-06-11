@@ -335,73 +335,39 @@ if (Test-Path $nssmPath) {
         Write-Host "  NSSM short path: $nssmShortPath" -ForegroundColor DarkGray
         Write-Host "  Crowdsec short path: $crowdsecShortPath" -ForegroundColor DarkGray
 
-        # Helper: run nssm command - pass each argument separately
-        function Invoke-NssmCmd {
-            param([string[]]$ArgsArray)
-            try {
-                $psi = New-Object System.Diagnostics.ProcessStartInfo
-                $psi.FileName = $nssmShortPath
-                $psi.Arguments = ($ArgsArray | ForEach-Object { "`"$_`"" }) -join " "
-                $psi.UseShellExecute = $false
-                $psi.RedirectStandardOutput = $true
-                $psi.RedirectStandardError = $true
-                $psi.CreateNoWindow = $true
-                $proc = [System.Diagnostics.Process]::Start($psi)
-                $stdout = $proc.StandardOutput.ReadToEnd()
-                $stderr = $proc.StandardError.ReadToEnd()
-                $proc.WaitForExit()
-                if ($stdout.Trim()) { Write-Host "    stdout: $stdout" -ForegroundColor DarkGray }
-                if ($stderr.Trim()) { Write-Host "    stderr: $stderr" -ForegroundColor DarkYellow }
-                if ($proc.ExitCode -ne 0) {
-                    Write-Warn "NSSM exit code: $($proc.ExitCode)"
-                }
-            } catch {
-                Write-Warn "NSSM failed: $_"
-            }
-        }
-
-        # Remove existing service if present - use sc.exe to force delete
+        # Remove existing service
         $existing = Get-Service CrowdSec -ErrorAction SilentlyContinue
         if ($existing) {
             Write-Warn "Removing existing CrowdSec service..."
-            & $nssmShortPath remove CrowdSec confirm 2>&1 | Out-Null
+            sc.exe stop CrowdSec 2>&1 | Out-Null
+            Start-Sleep -Seconds 2
+            sc.exe delete CrowdSec 2>&1 | Out-Null
             Start-Sleep -Seconds 3
-            # Force delete with sc.exe if still exists
-            $stillExists = Get-Service CrowdSec -ErrorAction SilentlyContinue
-            if ($stillExists) {
-                Write-Warn "Force deleting with sc.exe..."
-                sc.exe delete CrowdSec 2>&1 | Out-Null
-                Start-Sleep -Seconds 3
-            }
         }
 
-        # Install service with NSSM
-        # Copy config.yaml to install dir so crowdsec.exe finds it
-        # AppParameters: -winsvc tells crowdsec to run as Windows service
-        Write-Host "  Installing service..." -ForegroundColor Gray
+        # Copy config.yaml to install dir
         Copy-Item "$DataDir\config\config.yaml" "$InstallDir\config.yaml" -Force -ErrorAction SilentlyContinue
-        Invoke-NssmCmd @("install", "CrowdSec", $crowdsecShortPath)
-        Invoke-NssmCmd @("set", "CrowdSec", "AppDirectory", $InstallDir)
-        Invoke-NssmCmd @("set", "CrowdSec", "AppParameters", "`"--config $InstallDir\config.yaml -winsvc`"")
-        Invoke-NssmCmd @("set", "CrowdSec", "DisplayName", "CrowdSec Guardian")
-        Invoke-NssmCmd @("set", "CrowdSec", "Description", "CrowdSec Security Engine")
-        Invoke-NssmCmd @("set", "CrowdSec", "Start", "SERVICE_AUTO_START")
-        Invoke-NssmCmd @("set", "CrowdSec", "ObjectName", "LocalSystem")
-        Invoke-NssmCmd @("set", "CrowdSec", "Type", "SERVICE_WIN32_OWN_PROCESS")
 
-        # Set stdout/stderr log files
-        Invoke-NssmCmd @("set", "CrowdSec", "AppStdout", "$DataDir\log\service_stdout.log")
-        Invoke-NssmCmd @("set", "CrowdSec", "AppStderr", "$DataDir\log\service_stderr.log")
-        Invoke-NssmCmd @("set", "CrowdSec", "AppStdoutCreationDisposition", "4")
-        Invoke-NssmCmd @("set", "CrowdSec", "AppStderrCreationDisposition", "4")
-        Invoke-NssmCmd @("set", "CrowdSec", "AppRotateFiles", "1")
-        Invoke-NssmCmd @("set", "CrowdSec", "AppRotateBytes", "10485760")
+        # Install service using sc.exe with short paths (no spaces)
+        Write-Host "  Installing service with sc.exe..." -ForegroundColor Gray
+        $binPath = "$crowdsecShortPath --config $DataDir\config\config.yaml"
+        Write-Host "  binPath: $binPath" -ForegroundColor DarkGray
+        $scResult = sc.exe create CrowdSec binPath= $binPath start= auto DisplayName= "CrowdSec Guardian" obj= "LocalSystem" 2>&1
+        Write-Host "  sc.exe create result: $scResult" -ForegroundColor DarkGray
 
-        # Set restart action
-        Invoke-NssmCmd @("set", "CrowdSec", "AppExit", "Default", "Restart")
-        Invoke-NssmCmd @("set", "CrowdSec", "AppRestartDelay", "5000")
+        Start-Sleep -Seconds 2
 
-        Write-Ok "Service 'CrowdSec Guardian' created"
+        # Verify service was created
+        $svcCheck = Get-Service CrowdSec -ErrorAction SilentlyContinue
+        if ($svcCheck) {
+            Write-Ok "Service 'CrowdSec Guardian' created successfully"
+        } else {
+            Write-Fail "Service creation failed!"
+            Write-Host "  Trying alternative method with quoted path..." -ForegroundColor Yellow
+            $binPath2 = "`"$InstallDir\crowdsec.exe`" --config `"$DataDir\config\config.yaml`""
+            $scResult2 = sc.exe create CrowdSec binPath= $binPath2 start= auto DisplayName= "CrowdSec Guardian" obj= "LocalSystem" 2>&1
+            Write-Host "  sc.exe create result: $scResult2" -ForegroundColor DarkGray
+        }
     } else {
         Write-Warn "crowdsec.exe not found, skipping service creation"
     }
@@ -492,10 +458,10 @@ if (-not $serviceStarted) {
     }
 }
 
-# Fallback: try NSSM start directly
+# Fallback: try net start
 if (-not $serviceStarted) {
-    Write-Host "  Trying NSSM start..." -ForegroundColor Gray
-    Invoke-NssmCmd @("start", "CrowdSec")
+    Write-Host "  Trying net start..." -ForegroundColor Gray
+    net start CrowdSec 2>&1 | Out-Null
     Start-Sleep -Seconds 3
     $svc = Get-Service CrowdSec -ErrorAction SilentlyContinue
     if ($svc -and $svc.Status -eq "Running") {
