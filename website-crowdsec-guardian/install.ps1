@@ -328,13 +328,14 @@ if (Test-Path $crowdsecExe) {
 Write-Step "Creating CrowdSec Windows Service"
 if (Test-Path $nssmPath) {
     if (Test-Path $crowdsecExe) {
-        # Helper: run nssm via cmd.exe with proper quoting for paths with spaces
+        # Helper: run nssm - pass arguments as array to handle spaces in paths
         function Invoke-Nssm {
             param([string[]]$ArgsArray)
-            $argString = ($ArgsArray | ForEach-Object { "`"$_`"" }) -join " "
-            $cmdLine = "/c $argString"
+            # Filter out empty/null args to avoid Start-Process errors
+            $cleanArgs = $ArgsArray | Where-Object { $_ -and $_.Trim() -ne "" }
+            if ($cleanArgs.Count -eq 0) { return }
             try {
-                $proc = Start-Process -FilePath $nssmPath -ArgumentList $ArgsArray -Wait -PassThru -NoNewWindow -RedirectStandardOutput "$env:TEMP\nssm_out.txt" -RedirectStandardError "$env:TEMP\nssm_err.txt"
+                $proc = Start-Process -FilePath $nssmPath -ArgumentList $cleanArgs -Wait -PassThru -NoNewWindow -RedirectStandardOutput "$env:TEMP\nssm_out.txt" -RedirectStandardError "$env:TEMP\nssm_err.txt"
                 $stdout = Get-Content "$env:TEMP\nssm_out.txt" -ErrorAction SilentlyContinue
                 $stderr = Get-Content "$env:TEMP\nssm_err.txt" -ErrorAction SilentlyContinue
                 if ($stdout) { Write-Host "    stdout: $($stdout -join ', ')" -ForegroundColor DarkGray }
@@ -359,7 +360,6 @@ if (Test-Path $nssmPath) {
         Write-Host "  Installing service..." -ForegroundColor Gray
         Invoke-Nssm @("install", "CrowdSec", $crowdsecExe)
         Invoke-Nssm @("set", "CrowdSec", "AppDirectory", $InstallDir)
-        Invoke-Nssm @("set", "CrowdSec", "AppParameters", "")
         Invoke-Nssm @("set", "CrowdSec", "DisplayName", "CrowdSec Guardian")
         Invoke-Nssm @("set", "CrowdSec", "Description", "CrowdSec Security Engine")
         Invoke-Nssm @("set", "CrowdSec", "Start", "SERVICE_AUTO_START")
@@ -432,25 +432,67 @@ Write-Ok "Config created at $DataDir\config\config.yaml"
 # ============================================================
 Write-Step "Starting CrowdSec Guardian"
 Start-Sleep -Seconds 2
+
+$serviceStarted = $false
+
+# Try Start-Service first
 try {
     Start-Service CrowdSec -ErrorAction Stop
     Start-Sleep -Seconds 3
     $svc = Get-Service CrowdSec
-    Write-Ok "Service status: $($svc.Status)"
+    if ($svc.Status -eq "Running") {
+        Write-Ok "Service status: Running"
+        $serviceStarted = $true
+    } else {
+        Write-Warn "Service status: $($svc.Status) - trying NSSM start..."
+    }
 } catch {
-    Write-Fail "Could not start service: $_"
+    Write-Warn "Start-Service failed: $_"
+}
+
+# Fallback: try NSSM start directly
+if (-not $serviceStarted) {
+    Write-Host "  Trying NSSM start..." -ForegroundColor Gray
+    Invoke-Nssm @("start", "CrowdSec")
+    Start-Sleep -Seconds 3
+    $svc = Get-Service CrowdSec -ErrorAction SilentlyContinue
+    if ($svc -and $svc.Status -eq "Running") {
+        Write-Ok "Service status: Running (via NSSM)"
+        $serviceStarted = $true
+    }
+}
+
+# If still not running, show diagnostics
+if (-not $serviceStarted) {
+    Write-Fail "Could not start service"
     Write-Host ""
-    Write-Host "  Troubleshooting steps:" -ForegroundColor Yellow
-    Write-Host "  1. Check service logs:" -ForegroundColor Yellow
-    Write-Host "     Get-Content '$DataDir\log\service_stderr.log'" -ForegroundColor White
-    Write-Host "     Get-Content '$DataDir\log\service_stdout.log'" -ForegroundColor White
-    Write-Host "  2. Test crowdsec.exe manually:" -ForegroundColor Yellow
-    Write-Host "     cd '$InstallDir'" -ForegroundColor White
-    Write-Host "     .\crowdsec.exe --config '$DataDir\config\config.yaml'" -ForegroundColor White
-    Write-Host "  3. Check Windows Event Log:" -ForegroundColor Yellow
-    Write-Host "     Get-EventLog -LogName System -Source 'Service Control Manager' -Newest 10" -ForegroundColor White
-    Write-Host "  4. Try starting manually:" -ForegroundColor Yellow
-    Write-Host "     nssm start CrowdSec" -ForegroundColor White
+
+    # Show service stderr log if exists
+    $stderrLog = "$DataDir\log\service_stderr.log"
+    $stdoutLog = "$DataDir\log\service_stdout.log"
+    if (Test-Path $stderrLog) {
+        $logContent = Get-Content $stderrLog -Tail 20 -ErrorAction SilentlyContinue
+        if ($logContent) {
+            Write-Host "  Last lines from service_stderr.log:" -ForegroundColor Yellow
+            $logContent | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkYellow }
+            Write-Host ""
+        }
+    }
+    if (Test-Path $stdoutLog) {
+        $logContent = Get-Content $stdoutLog -Tail 20 -ErrorAction SilentlyContinue
+        if ($logContent) {
+            Write-Host "  Last lines from service_stdout.log:" -ForegroundColor Yellow
+            $logContent | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray }
+            Write-Host ""
+        }
+    }
+
+    Write-Host "  Manual troubleshooting:" -ForegroundColor Yellow
+    Write-Host "  1. Test crowdsec.exe manually:" -ForegroundColor White
+    Write-Host "     cd '$InstallDir'" -ForegroundColor Cyan
+    Write-Host "     .\crowdsec.exe --config '$DataDir\config\config.yaml'" -ForegroundColor Cyan
+    Write-Host "  2. Check Windows Event Log:" -ForegroundColor White
+    Write-Host "     Get-EventLog -LogName System -Source 'Service Control Manager' -Newest 10" -ForegroundColor Cyan
     Write-Host ""
 }
 
