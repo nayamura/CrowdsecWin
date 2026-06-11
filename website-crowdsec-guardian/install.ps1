@@ -378,7 +378,7 @@ if (Test-Path $nssmPath) {
         # Install service with NSSM
         Write-Host "  Installing service..." -ForegroundColor Gray
         Invoke-NssmCmd @("install", "CrowdSec", $crowdsecShortPath)
-        Invoke-NssmCmd @("set", "CrowdSec", "AppDirectory", $InstallDir)
+        Invoke-NssmCmd @("set", "CrowdSec", "AppDirectory", $DataDir)
         Invoke-NssmCmd @("set", "CrowdSec", "AppParameters", "--config `"$DataDir\config\config.yaml`"")
         Invoke-NssmCmd @("set", "CrowdSec", "DisplayName", "CrowdSec Guardian")
         Invoke-NssmCmd @("set", "CrowdSec", "Description", "CrowdSec Security Engine")
@@ -455,19 +455,38 @@ Start-Sleep -Seconds 2
 
 $serviceStarted = $false
 
-# Try Start-Service first
-try {
-    Start-Service CrowdSec -ErrorAction Stop
-    Start-Sleep -Seconds 3
-    $svc = Get-Service CrowdSec
-    if ($svc.Status -eq "Running") {
-        Write-Ok "Service status: Running"
-        $serviceStarted = $true
-    } else {
-        Write-Warn "Service status: $($svc.Status) - trying NSSM start..."
+# Check if service is paused and resume it first
+$svc = Get-Service CrowdSec -ErrorAction SilentlyContinue
+if ($svc -and $svc.Status -eq "Paused") {
+    Write-Warn "Service is paused, resuming..."
+    try {
+        Resume-Service CrowdSec -ErrorAction Stop
+        Start-Sleep -Seconds 3
+        $svc = Get-Service CrowdSec
+        if ($svc.Status -eq "Running") {
+            Write-Ok "Service status: Running (resumed)"
+            $serviceStarted = $true
+        }
+    } catch {
+        Write-Warn "Resume-Service failed: $_"
     }
-} catch {
-    Write-Warn "Start-Service failed: $_"
+}
+
+# Try Start-Service if not running yet
+if (-not $serviceStarted) {
+    try {
+        Start-Service CrowdSec -ErrorAction Stop
+        Start-Sleep -Seconds 3
+        $svc = Get-Service CrowdSec
+        if ($svc.Status -eq "Running") {
+            Write-Ok "Service status: Running"
+            $serviceStarted = $true
+        } else {
+            Write-Warn "Service status: $($svc.Status) - trying NSSM start..."
+        }
+    } catch {
+        Write-Warn "Start-Service failed: $_"
+    }
 }
 
 # Fallback: try NSSM start directly
