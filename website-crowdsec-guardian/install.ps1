@@ -328,6 +328,13 @@ if (Test-Path $crowdsecExe) {
 Write-Step "Creating CrowdSec Windows Service"
 if (Test-Path $nssmPath) {
     if (Test-Path $crowdsecExe) {
+        # Get short path (8.3) to avoid spaces issues
+        $fso = New-Object -ComObject Scripting.FileSystemObject
+        $nssmShortPath = $fso.GetFile($nssmPath).ShortPath
+        $crowdsecShortPath = $fso.GetFile($crowdsecExe).ShortPath
+        Write-Host "  NSSM short path: $nssmShortPath" -ForegroundColor DarkGray
+        Write-Host "  Crowdsec short path: $crowdsecShortPath" -ForegroundColor DarkGray
+
         # Helper: run nssm command - handles paths with spaces correctly
         function Invoke-NssmCmd {
             param([string]$NssmExe, [string]$Arguments)
@@ -357,32 +364,32 @@ if (Test-Path $nssmPath) {
         $existing = Get-Service CrowdSec -ErrorAction SilentlyContinue
         if ($existing) {
             Write-Warn "Removing existing CrowdSec service..."
-            Invoke-NssmCmd $nssmPath "remove CrowdSec confirm"
+            Invoke-NssmCmd $nssmShortPath "remove CrowdSec confirm"
             Start-Sleep -Seconds 2
         }
 
         # Install service with NSSM
         Write-Host "  Installing service..." -ForegroundColor Gray
-        Invoke-NssmCmd $nssmPath "install CrowdSec `"$crowdsecExe`""
-        Invoke-NssmCmd $nssmPath "set CrowdSec AppDirectory `"$InstallDir`""
-        Invoke-NssmCmd $nssmPath "set CrowdSec AppParameters `"--config $DataDir\config\config.yaml`""
-        Invoke-NssmCmd $nssmPath "set CrowdSec DisplayName `"CrowdSec Guardian`""
-        Invoke-NssmCmd $nssmPath "set CrowdSec Description `"CrowdSec Security Engine`""
-        Invoke-NssmCmd $nssmPath "set CrowdSec Start SERVICE_AUTO_START"
-        Invoke-NssmCmd $nssmPath "set CrowdSec ObjectName LocalSystem"
-        Invoke-NssmCmd $nssmPath "set CrowdSec Type SERVICE_WIN32_OWN_PROCESS"
+        Invoke-NssmCmd $nssmShortPath "install CrowdSec `"$crowdsecShortPath`""
+        Invoke-NssmCmd $nssmShortPath "set CrowdSec AppDirectory `"$InstallDir`""
+        Invoke-NssmCmd $nssmShortPath "set CrowdSec AppParameters `"--config $DataDir\config\config.yaml`""
+        Invoke-NssmCmd $nssmShortPath "set CrowdSec DisplayName `"CrowdSec Guardian`""
+        Invoke-NssmCmd $nssmShortPath "set CrowdSec Description `"CrowdSec Security Engine`""
+        Invoke-NssmCmd $nssmShortPath "set CrowdSec Start SERVICE_AUTO_START"
+        Invoke-NssmCmd $nssmShortPath "set CrowdSec ObjectName LocalSystem"
+        Invoke-NssmCmd $nssmShortPath "set CrowdSec Type SERVICE_WIN32_OWN_PROCESS"
 
         # Set stdout/stderr log files
-        Invoke-NssmCmd $nssmPath "set CrowdSec AppStdout `"$DataDir\log\service_stdout.log`""
-        Invoke-NssmCmd $nssmPath "set CrowdSec AppStderr `"$DataDir\log\service_stderr.log`""
-        Invoke-NssmCmd $nssmPath "set CrowdSec AppStdoutCreationDisposition 4"
-        Invoke-NssmCmd $nssmPath "set CrowdSec AppStderrCreationDisposition 4"
-        Invoke-NssmCmd $nssmPath "set CrowdSec AppRotateFiles 1"
-        Invoke-NssmCmd $nssmPath "set CrowdSec AppRotateBytes 10485760"
+        Invoke-NssmCmd $nssmShortPath "set CrowdSec AppStdout `"$DataDir\log\service_stdout.log`""
+        Invoke-NssmCmd $nssmShortPath "set CrowdSec AppStderr `"$DataDir\log\service_stderr.log`""
+        Invoke-NssmCmd $nssmShortPath "set CrowdSec AppStdoutCreationDisposition 4"
+        Invoke-NssmCmd $nssmShortPath "set CrowdSec AppStderrCreationDisposition 4"
+        Invoke-NssmCmd $nssmShortPath "set CrowdSec AppRotateFiles 1"
+        Invoke-NssmCmd $nssmShortPath "set CrowdSec AppRotateBytes 10485760"
 
         # Set restart action
-        Invoke-NssmCmd $nssmPath "set CrowdSec AppExit Default Restart"
-        Invoke-NssmCmd $nssmPath "set CrowdSec AppRestartDelay 5000"
+        Invoke-NssmCmd $nssmShortPath "set CrowdSec AppExit Default Restart"
+        Invoke-NssmCmd $nssmShortPath "set CrowdSec AppRestartDelay 5000"
 
         Write-Ok "Service 'CrowdSec Guardian' created"
     } else {
