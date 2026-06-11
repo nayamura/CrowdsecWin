@@ -376,10 +376,13 @@ if (Test-Path $nssmPath) {
         }
 
         # Install service with NSSM
+        # Copy config.yaml to install dir so crowdsec.exe finds it
+        # AppParameters: -winsvc tells crowdsec to run as Windows service
         Write-Host "  Installing service..." -ForegroundColor Gray
+        Copy-Item "$DataDir\config\config.yaml" "$InstallDir\config.yaml" -Force -ErrorAction SilentlyContinue
         Invoke-NssmCmd @("install", "CrowdSec", $crowdsecShortPath)
-        Invoke-NssmCmd @("set", "CrowdSec", "AppDirectory", $DataDir)
-        Invoke-NssmCmd @("set", "CrowdSec", "AppParameters", "--config `"$DataDir\config\config.yaml`"")
+        Invoke-NssmCmd @("set", "CrowdSec", "AppDirectory", $InstallDir)
+        Invoke-NssmCmd @("set", "CrowdSec", "AppParameters", "`"--config $InstallDir\config.yaml -winsvc`"")
         Invoke-NssmCmd @("set", "CrowdSec", "DisplayName", "CrowdSec Guardian")
         Invoke-NssmCmd @("set", "CrowdSec", "Description", "CrowdSec Security Engine")
         Invoke-NssmCmd @("set", "CrowdSec", "Start", "SERVICE_AUTO_START")
