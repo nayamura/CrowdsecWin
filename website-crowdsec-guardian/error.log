@@ -1,8 +1,84 @@
+=== Installing NSSM (service manager) ===
+  [OK] NSSM already exists at C:\Program Files\CrowdSec\nssm.exe
+
+=== Testing crowdsec.exe ===
+  [OK] crowdsec.exe version: version: v1.0.0-custom-b962bc0 Codename: alphaga BuildDate: 2026-06-10 GoVersion: 1.26.1 Platform: windows libre2: WebAssembly User-Agent: crowdsec/v1.0.0-custom-b962bc0-windows Constraint_parser: >= 1.0, <= 3.0 Constraint_scenario: >= 1.0, <= 3.0 Constraint_api: v1 Constraint_acquis: >= 1.0, < 2.0 Built-in optional components: datasource_appsec, datasource_cloudwatch, datasource_docker, datasource_file, datasource_http, datasource_journalctl, datasource_k8s-audit, datasource_kafka, datasource_kinesis, datasource_loki, datasource_s3, datasource_syslog, datasource_victorialogs, datasource_wineventlog, db_mysql, db_postgres, db_sqlite Excluded components: cscli_setup
+
 === Creating CrowdSec Windows Service ===
   Installing service...
-nssm.exe : N S S M :   T h e   n o n - s u c k i n g   s e r v i c e   m a n a g e r
-At C:\Users\Administrator\Desktop\website-crowdsec-guardian\install.ps1:343 char:9
-+         & $nssmPath set CrowdSec AppParameters "" 2>$null | Out-Null
-+         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (N S S M :   T h... m a n a g e r :String) [], RemoteException
-    + FullyQualifiedErrorId : NativeCommandError
+    stderr: 'C:\Program' is not recognized as an internal or external command, operable program or batch file.
+  [WARN] NSSM exit code: 1
+    stderr: 'C:\Program' is not recognized as an internal or external command, operable program or batch file.
+  [WARN] NSSM exit code: 1
+    stderr: 'C:\Program' is not recognized as an internal or external command, operable program or batch file.
+  [WARN] NSSM exit code: 1
+    stderr: 'C:\Program' is not recognized as an internal or external command, operable program or batch file.
+  [WARN] NSSM exit code: 1
+    stderr: 'C:\Program' is not recognized as an internal or external command, operable program or batch file.
+  [WARN] NSSM exit code: 1
+    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
+  [WARN] NSSM exit code: 3
+    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
+  [WARN] NSSM exit code: 3
+    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
+  [WARN] NSSM exit code: 3
+    stderr: 'C:\Program' is not recognized as an internal or external command, operable program or batch file.
+  [WARN] NSSM exit code: 1
+    stderr: 'C:\Program' is not recognized as an internal or external command, operable program or batch file.
+  [WARN] NSSM exit code: 1
+    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
+  [WARN] NSSM exit code: 3
+    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
+  [WARN] NSSM exit code: 3
+    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
+  [WARN] NSSM exit code: 3
+    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
+  [WARN] NSSM exit code: 3
+    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
+  [WARN] NSSM exit code: 3
+    stderr: C a n ' t   o p e n   s e r v i c e !       O p e n S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   d o e s   n o t   e x i s t   a s   a n   i n s t a l l e d   s e r v i c e .
+  [WARN] NSSM exit code: 3
+  [OK] Service 'CrowdSec Guardian' created
+
+=== Creating basic config ===
+  [OK] Config created at C:\ProgramData\CrowdSec\config\config.yaml
+
+=== Starting CrowdSec Guardian ===
+  [FAIL] Could not start service: Cannot find any service with service name 'CrowdSec'.
+
+  Troubleshooting steps:
+  1. Check service logs:
+     Get-Content 'C:\ProgramData\CrowdSec\log\service_stderr.log'
+     Get-Content 'C:\ProgramData\CrowdSec\log\service_stdout.log'
+  2. Test crowdsec.exe manually:
+     cd 'C:\Program Files\CrowdSec'
+     .\crowdsec.exe --config 'C:\ProgramData\CrowdSec\config\config.yaml'
+  3. Check Windows Event Log:
+     Get-EventLog -LogName System -Source 'Service Control Manager' -Newest 10
+  4. Try starting manually:
+     nssm start CrowdSec
+
+
+=== Verification ===
+  [WARN] Service not found
+
+========================================
+  CrowdSec Guardian Installation Complete!
+========================================
+
+  Install Dir:  C:\Program Files\CrowdSec
+  Data Dir:     C:\ProgramData\CrowdSec
+  CAPI URL:     https://186.72.108.182
+
+  Next steps:
+  1. Register agent:     cscli machines add
+  2. Register CAPI:      cscli capi register
+  3. Check status:       cscli machines list
+  4. View alerts:        cscli alerts list
+
+  Service commands:
+    Start:   Start-Service CrowdSec
+    Stop:    Stop-Service CrowdSec
+    Status:  Get-Service CrowdSec
+
+========================================
