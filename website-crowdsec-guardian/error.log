@@ -1,69 +1,66 @@
-=== Installing NSSM (service manager) ===
-  [OK] NSSM already exists at C:\Program Files\CrowdSec\nssm.exe
+[Test 1] NSSM existe:
+  OK: C:\PROGRA~1\CrowdSec\nssm.exe
 
-=== Testing crowdsec.exe ===
-  [OK] crowdsec.exe version: version: v1.0.0-custom-b962bc0 Codename: alphaga BuildDate: 2026-06-10 GoVersion: 1.26.1 Platform: windows libre2: WebAssembly User-Agent: crowdsec/v1.0.0-custom-b962bc0-windows Constraint_parser: >= 1.0, <= 3.0 Constraint_scenario: >= 1.0, <= 3.0 Constraint_api: v1 Constraint_acquis: >= 1.0, < 2.0 Built-in optional components: datasource_appsec, datasource_cloudwatch, datasource_docker, datasource_file, datasource_http, datasource_journalctl, datasource_k8s-audit, datasource_kafka, datasource_kinesis, datasource_loki, datasource_s3, datasource_syslog, datasource_victorialogs, datasource_wineventlog, db_mysql, db_postgres, db_sqlite Excluded components: cscli_setup
+[Test 2] crowdsec.exe existe:
+  OK: C:\PROGRA~1\CrowdSec\crowdsec.exe
+  Version: version: v1.0.0-custom-b962bc0 Codename: alphaga BuildDate: 2026-06-10 GoVersion: 1.26.1 Platform: windows libre2: WebAssembly User-Agent: crowdsec/v1.0.0-custom-b962bc0-windows Constraint_parser: >= 1.0, <= 3.0 Constraint_scenario: >= 1.0, <= 3.0 Constraint_api: v1 Constraint_acquis: >= 1.0, < 2.0 Built-in optional components: datasource_appsec, datasource_cloudwatch, datasource_docker, datasource_file, datasource_http, datasource_journalctl, datasource_k8s-audit, datasource_kafka, datasource_kinesis, datasource_loki, datasource_s3, datasource_syslog, datasource_victorialogs, datasource_wineventlog, db_mysql, db_postgres, db_sqlite Excluded components: cscli_setup
 
-=== Creating CrowdSec Windows Service ===
-  NSSM short path: C:\PROGRA~1\CrowdSec\nssm.exe
-  Crowdsec short path: C:\PROGRA~1\CrowdSec\crowdsec.exe
-  Installing service...
-    stdout: S e r v i c e   " C r o w d S e c "   i n s t a l l e d   s u c c e s s f u l l y !
+[Test 3] Probar crowdsec.exe --help | Select winsvc:
+  OK:   -c string
+        configuration file (default "C:\\ProgramData\\CrowdSec\\config.yaml")
+  -cpu-profile string
+        write cpu profile to file
+  -debug
+        set log level to 'debug'
+  -dsn string
+        Process a single data source in time-machine
+  -dump-data string
+        dump parsers/buckets raw outputs
+  -error
+        set log level to 'error'
+  -fatal
+        set log level to 'fatal'
+  -info
+        set log level to 'info'
+  -label value
+        Additional Labels for file in time-machine
+  -no-api
+        disable local API
+  -no-capi
+        disable communication with Central API
+  -no-cs
+        disable crowdsec agent
+  -order-event
+        enforce event ordering with significant performance cost
+  -t    only test configs
+  -trace
+        set log level to 'trace' (VERY verbose)
+  -transform string
+        expr to apply on the event after acquisition
+  -type string
+        Labels.type for file in time-machine
+  -version
+        display version
+  -warning
+        set log level to 'warning'
+  -winsvc string
+        Windows service Action: Install, Remove etc..
 
-    stdout: S e t   p a r a m e t e r   " A p p D i r e c t o r y "   f o r   s e r v i c e   " C r o w d S e c " .
 
-    stdout: S e t   p a r a m e t e r   " A p p P a r a m e t e r s "   f o r   s e r v i c e   " C r o w d S e c " .
+[Test 4] Instalar servicio paso a paso:
+  Instalando servicio con NSSM...
+  Exit: 0
+  stdout: S e r v i c e   " C r o w d S e c "   i n s t a l l e d   s u c c e s s f u l l y !
 
-    stdout: S e t   p a r a m e t e r   " D i s p l a y N a m e "   f o r   s e r v i c e   " C r o w d S e c " .
 
-    stdout: S e t   p a r a m e t e r   " D e s c r i p t i o n "   f o r   s e r v i c e   " C r o w d S e c " .
+[Test 5] Verificar servicio CrowdSec:
+  OK: Stopped - CrowdSec
 
-    stdout: S e t   p a r a m e t e r   " S t a r t "   f o r   s e r v i c e   " C r o w d S e c " .
+[Test 6] Intentar iniciar servicio:
+  Error: Failed to start service 'CrowdSec (CrowdSec)'.
 
-    stdout: R e s e t   p a r a m e t e r   " O b j e c t N a m e "   f o r   s e r v i c e   " C r o w d S e c "   t o   i t s   d e f a u l t .
-
-    stdout: S e t   p a r a m e t e r   " T y p e "   f o r   s e r v i c e   " C r o w d S e c " .
-
-    stdout: S e t   p a r a m e t e r   " A p p S t d o u t "   f o r   s e r v i c e   " C r o w d S e c " .
-
-    stdout: S e t   p a r a m e t e r   " A p p S t d e r r "   f o r   s e r v i c e   " C r o w d S e c " .
-
-    stdout: R e s e t   p a r a m e t e r   " A p p S t d o u t C r e a t i o n D i s p o s i t i o n "   f o r   s e r   i c e   " C r o w d S e c "   t o   i t s   d e f a u l t .
-
-    stdout: R e s e t   p a r a m e t e r   " A p p S t d e r r C r e a t i o n D i s p o s i t i o n "   f o r   s e r   i c e   " C r o w d S e c "   t o   i t s   d e f a u l t .
-
-    stdout: S e t   p a r a m e t e r   " A p p R o t a t e F i l e s "   f o r   s e r v i c e   " C r o w d S e c " .
-
-    stdout: S e t   p a r a m e t e r   " A p p R o t a t e B y t e s "   f o r   s e r v i c e   " C r o w d S e c " .
-
-    stdout: R e s e t   p a r a m e t e r   " A p p E x i t "   f o r   s e r v i c e   " C r o w d S e c "   t o   i t     d e f a u l t .
-
-    stdout: S e t   p a r a m e t e r   " A p p R e s t a r t D e l a y "   f o r   s e r v i c e   " C r o w d S e c " 
-
-  [OK] Service 'CrowdSec Guardian' created
-
-=== Creating basic config ===
-  [OK] Config created at C:\ProgramData\CrowdSec\config\config.yaml
-
-=== Starting CrowdSec Guardian ===
-  [WARN] Start-Service failed: Failed to start service 'CrowdSec Guardian (CrowdSec)'.
-  Trying NSSM start...
-    stderr: C r o w d S e c :   S T A R T :   A n   i n s t a n c e   o f   t h e   s e r v i c e   i s   a l r e a d y   r u n n i n g .
-
-  [WARN] NSSM exit code: 1
-  [FAIL] Could not start service
-
-  Last lines from service_stderr.log:
-                disable local API
-      -no-capi
-                disable communication with Central API
-      -no-cs
-                disable crowdsec agent
-      -order-event
-                enforce event ordering with significant performance cost
-      -t        only test configs
-      -trace
-                set log level to 'trace' (VERY verbose)
+[Test 7] Logs del servicio:
+  service_stderr.log (ultimas 10 lineas):
       -transform string
                 expr to apply on the event after acquisition
       -type string
@@ -75,34 +72,4 @@
       -winsvc string
                 Windows service Action: Install, Remove etc..
 
-  Manual troubleshooting:
-  1. Test crowdsec.exe manually:
-     cd 'C:\Program Files\CrowdSec'
-     .\crowdsec.exe --config 'C:\ProgramData\CrowdSec\config\config.yaml'
-  2. Check Windows Event Log:
-     Get-EventLog -LogName System -Source 'Service Control Manager' -Newest 10
-
-
-=== Verification ===
-  [OK] Service status: Paused
-
-========================================
-  CrowdSec Guardian Installation Complete!
-========================================
-
-  Install Dir:  C:\Program Files\CrowdSec
-  Data Dir:     C:\ProgramData\CrowdSec
-  CAPI URL:     https://186.72.108.182
-
-  Next steps:
-  1. Register agent:     cscli machines add
-  2. Register CAPI:      cscli capi register
-  3. Check status:       cscli machines list
-  4. View alerts:        cscli alerts list
-
-  Service commands:
-    Start:   Start-Service CrowdSec
-    Stop:    Stop-Service CrowdSec
-    Status:  Get-Service CrowdSec
-
-========================================
+=== FIN DEL DIAGNOSTICO ===
