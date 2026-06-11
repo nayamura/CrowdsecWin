@@ -328,16 +328,23 @@ if (Test-Path $crowdsecExe) {
 Write-Step "Creating CrowdSec Windows Service"
 if (Test-Path $nssmPath) {
     if (Test-Path $crowdsecExe) {
-        # Helper: run nssm via cmd.exe with full command line as single string
-        # This ensures NSSM receives arguments exactly as it expects them
+        # Helper: run nssm command - handles paths with spaces correctly
         function Invoke-NssmCmd {
-            param([string]$CmdLine)
+            param([string]$Arguments)
             try {
-                $proc = Start-Process -FilePath "cmd.exe" -ArgumentList "/c $CmdLine" -Wait -PassThru -NoNewWindow -RedirectStandardOutput "$env:TEMP\nssm_out.txt" -RedirectStandardError "$env:TEMP\nssm_err.txt"
-                $stdout = Get-Content "$env:TEMP\nssm_out.txt" -ErrorAction SilentlyContinue
-                $stderr = Get-Content "$env:TEMP\nssm_err.txt" -ErrorAction SilentlyContinue
-                if ($stdout) { Write-Host "    stdout: $($stdout -join ', ')" -ForegroundColor DarkGray }
-                if ($stderr) { Write-Host "    stderr: $($stderr -join ', ')" -ForegroundColor DarkYellow }
+                $psi = New-Object System.Diagnostics.ProcessStartInfo
+                $psi.FileName = $nssmPath
+                $psi.Arguments = $Arguments
+                $psi.UseShellExecute = $false
+                $psi.RedirectStandardOutput = $true
+                $psi.RedirectStandardError = $true
+                $psi.CreateNoWindow = $true
+                $proc = [System.Diagnostics.Process]::Start($psi)
+                $stdout = $proc.StandardOutput.ReadToEnd()
+                $stderr = $proc.StandardError.ReadToEnd()
+                $proc.WaitForExit()
+                if ($stdout.Trim()) { Write-Host "    stdout: $stdout" -ForegroundColor DarkGray }
+                if ($stderr.Trim()) { Write-Host "    stderr: $stderr" -ForegroundColor DarkYellow }
                 if ($proc.ExitCode -ne 0) {
                     Write-Warn "NSSM exit code: $($proc.ExitCode)"
                 }
@@ -350,32 +357,32 @@ if (Test-Path $nssmPath) {
         $existing = Get-Service CrowdSec -ErrorAction SilentlyContinue
         if ($existing) {
             Write-Warn "Removing existing CrowdSec service..."
-            Invoke-NssmCmd "`"$nssmPath`" remove CrowdSec confirm"
+            Invoke-NssmCmd "remove CrowdSec confirm"
             Start-Sleep -Seconds 2
         }
 
-        # Install service with NSSM via cmd.exe
+        # Install service with NSSM
         Write-Host "  Installing service..." -ForegroundColor Gray
-        Invoke-NssmCmd "`"$nssmPath`" install CrowdSec `"$crowdsecExe`""
-        Invoke-NssmCmd "`"$nssmPath`" set CrowdSec AppDirectory `"$InstallDir`""
-        Invoke-NssmCmd "`"$nssmPath`" set CrowdSec AppParameters `"--config $DataDir\config\config.yaml`""
-        Invoke-NssmCmd "`"$nssmPath`" set CrowdSec DisplayName `"CrowdSec Guardian`""
-        Invoke-NssmCmd "`"$nssmPath`" set CrowdSec Description `"CrowdSec Security Engine`""
-        Invoke-NssmCmd "`"$nssmPath`" set CrowdSec Start SERVICE_AUTO_START"
-        Invoke-NssmCmd "`"$nssmPath`" set CrowdSec ObjectName LocalSystem"
-        Invoke-NssmCmd "`"$nssmPath`" set CrowdSec Type SERVICE_WIN32_OWN_PROCESS"
+        Invoke-NssmCmd "install CrowdSec `"$crowdsecExe`""
+        Invoke-NssmCmd "set CrowdSec AppDirectory `"$InstallDir`""
+        Invoke-NssmCmd "set CrowdSec AppParameters `"--config $DataDir\config\config.yaml`""
+        Invoke-NssmCmd "set CrowdSec DisplayName `"CrowdSec Guardian`""
+        Invoke-NssmCmd "set CrowdSec Description `"CrowdSec Security Engine`""
+        Invoke-NssmCmd "set CrowdSec Start SERVICE_AUTO_START"
+        Invoke-NssmCmd "set CrowdSec ObjectName LocalSystem"
+        Invoke-NssmCmd "set CrowdSec Type SERVICE_WIN32_OWN_PROCESS"
 
         # Set stdout/stderr log files
-        Invoke-NssmCmd "`"$nssmPath`" set CrowdSec AppStdout `"$DataDir\log\service_stdout.log`""
-        Invoke-NssmCmd "`"$nssmPath`" set CrowdSec AppStderr `"$DataDir\log\service_stderr.log`""
-        Invoke-NssmCmd "`"$nssmPath`" set CrowdSec AppStdoutCreationDisposition 4"
-        Invoke-NssmCmd "`"$nssmPath`" set CrowdSec AppStderrCreationDisposition 4"
-        Invoke-NssmCmd "`"$nssmPath`" set CrowdSec AppRotateFiles 1"
-        Invoke-NssmCmd "`"$nssmPath`" set CrowdSec AppRotateBytes 10485760"
+        Invoke-NssmCmd "set CrowdSec AppStdout `"$DataDir\log\service_stdout.log`""
+        Invoke-NssmCmd "set CrowdSec AppStderr `"$DataDir\log\service_stderr.log`""
+        Invoke-NssmCmd "set CrowdSec AppStdoutCreationDisposition 4"
+        Invoke-NssmCmd "set CrowdSec AppStderrCreationDisposition 4"
+        Invoke-NssmCmd "set CrowdSec AppRotateFiles 1"
+        Invoke-NssmCmd "set CrowdSec AppRotateBytes 10485760"
 
         # Set restart action
-        Invoke-NssmCmd "`"$nssmPath`" set CrowdSec AppExit Default Restart"
-        Invoke-NssmCmd "`"$nssmPath`" set CrowdSec AppRestartDelay 5000"
+        Invoke-NssmCmd "set CrowdSec AppExit Default Restart"
+        Invoke-NssmCmd "set CrowdSec AppRestartDelay 5000"
 
         Write-Ok "Service 'CrowdSec Guardian' created"
     } else {
