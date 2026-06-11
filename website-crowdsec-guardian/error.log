@@ -1,75 +1,26 @@
-[Test 1] NSSM existe:
-  OK: C:\PROGRA~1\CrowdSec\nssm.exe
+=== Installing NSSM (service manager) ===
+  [OK] NSSM already exists at C:\Program Files\CrowdSec\nssm.exe
 
-[Test 2] crowdsec.exe existe:
-  OK: C:\PROGRA~1\CrowdSec\crowdsec.exe
-  Version: version: v1.0.0-custom-b962bc0 Codename: alphaga BuildDate: 2026-06-10 GoVersion: 1.26.1 Platform: windows libre2: WebAssembly User-Agent: crowdsec/v1.0.0-custom-b962bc0-windows Constraint_parser: >= 1.0, <= 3.0 Constraint_scenario: >= 1.0, <= 3.0 Constraint_api: v1 Constraint_acquis: >= 1.0, < 2.0 Built-in optional components: datasource_appsec, datasource_cloudwatch, datasource_docker, datasource_file, datasource_http, datasource_journalctl, datasource_k8s-audit, datasource_kafka, datasource_kinesis, datasource_loki, datasource_s3, datasource_syslog, datasource_victorialogs, datasource_wineventlog, db_mysql, db_postgres, db_sqlite Excluded components: cscli_setup
+=== Testing crowdsec.exe ===
+  [OK] crowdsec.exe version: version: v1.0.0-custom-b962bc0 Codename: alphaga BuildDate: 2026-06-10 GoVersion: 1.26.1 Platform: windows libre2: WebAssembly User-Agent: crowdsec/v1.0.0-custom-b962bc0-windows Constraint_parser: >= 1.0, <= 3.0 Constraint_scenario: >= 1.0, <= 3.0 Constraint_api: v1 Constraint_acquis: >= 1.0, < 2.0 Built-in optional components: datasource_appsec, datasource_cloudwatch, datasource_docker, datasource_file, datasource_http, datasource_journalctl, datasource_k8s-audit, datasource_kafka, datasource_kinesis, datasource_loki, datasource_s3, datasource_syslog, datasource_victorialogs, datasource_wineventlog, db_mysql, db_postgres, db_sqlite Excluded components: cscli_setup
 
-[Test 3] Probar crowdsec.exe --help | Select winsvc:
-  OK:   -c string
-        configuration file (default "C:\\ProgramData\\CrowdSec\\config.yaml")
-  -cpu-profile string
-        write cpu profile to file
-  -debug
-        set log level to 'debug'
-  -dsn string
-        Process a single data source in time-machine
-  -dump-data string
-        dump parsers/buckets raw outputs
-  -error
-        set log level to 'error'
-  -fatal
-        set log level to 'fatal'
-  -info
-        set log level to 'info'
-  -label value
-        Additional Labels for file in time-machine
-  -no-api
-        disable local API
-  -no-capi
-        disable communication with Central API
-  -no-cs
-        disable crowdsec agent
-  -order-event
-        enforce event ordering with significant performance cost
-  -t    only test configs
-  -trace
-        set log level to 'trace' (VERY verbose)
-  -transform string
-        expr to apply on the event after acquisition
-  -type string
-        Labels.type for file in time-machine
-  -version
-        display version
-  -warning
-        set log level to 'warning'
-  -winsvc string
-        Windows service Action: Install, Remove etc..
+=== Creating CrowdSec Windows Service ===
+  NSSM short path: C:\PROGRA~1\CrowdSec\nssm.exe
+  Crowdsec short path: C:\PROGRA~1\CrowdSec\crowdsec.exe
+  Installing service with sc.exe...
+  binPath: C:\PROGRA~1\CrowdSec\crowdsec.exe --config C:\ProgramData\CrowdSec\config\config.yaml
+  sc.exe create result: [SC] CreateService SUCCESS
+  [OK] Service 'CrowdSec Guardian' created successfully
 
+=== Creating basic config ===
+  [OK] Config created at C:\ProgramData\CrowdSec\config\config.yaml
 
-[Test 4] Instalar servicio paso a paso:
-  Instalando servicio con NSSM...
-  Exit: 0
-  stdout: S e r v i c e   " C r o w d S e c "   i n s t a l l e d   s u c c e s s f u l l y !
-
-
-[Test 5] Verificar servicio CrowdSec:
-  OK: Stopped - CrowdSec
-
-[Test 6] Intentar iniciar servicio:
-  Error: Failed to start service 'CrowdSec (CrowdSec)'.
-
-[Test 7] Logs del servicio:
-  service_stderr.log (ultimas 10 lineas):
-      -transform string
-                expr to apply on the event after acquisition
-      -type string
-                Labels.type for file in time-machine
-      -version
-                display version
-      -warning
-                set log level to 'warning'
-      -winsvc string
-                Windows service Action: Install, Remove etc..
-
-=== FIN DEL DIAGNOSTICO ===
+=== Starting CrowdSec Guardian ===
+  [WARN] Start-Service failed: Service 'CrowdSec Guardian (CrowdSec)' cannot be started due to the following error: Cannot start service CrowdSec on computer '.'.
+  Trying net start...
+net : The service is not responding to the control function.
+At C:\Users\Administrator\Desktop\website-crowdsec-guardian\install.ps1:464 char:5
++     net start CrowdSec 2>&1 | Out-Null
++     ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (The service is ...ntrol function.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
