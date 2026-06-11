@@ -1,8 +1,13 @@
+=== Installing NSSM (service manager) ===
+  [OK] NSSM already exists at C:\Program Files\CrowdSec\nssm.exe
+
+=== Testing crowdsec.exe ===
+  [OK] crowdsec.exe version: version: v1.0.0-custom-b962bc0 Codename: alphaga BuildDate: 2026-06-10 GoVersion: 1.26.1 Platform: windows libre2: WebAssembly User-Agent: crowdsec/v1.0.0-custom-b962bc0-windows Constraint_parser: >= 1.0, <= 3.0 Constraint_scenario: >= 1.0, <= 3.0 Constraint_api: v1 Constraint_acquis: >= 1.0, < 2.0 Built-in optional components: datasource_appsec, datasource_cloudwatch, datasource_docker, datasource_file, datasource_http, datasource_journalctl, datasource_k8s-audit, datasource_kafka, datasource_kinesis, datasource_loki, datasource_s3, datasource_syslog, datasource_victorialogs, datasource_wineventlog, db_mysql, db_postgres, db_sqlite Excluded components: cscli_setup
+
 === Creating CrowdSec Windows Service ===
   Installing service...
     stdout: S e r v i c e   " C r o w d S e c "   i n s t a l l e d   s u c c e s s f u l l y ! ,  ,  ,
     stdout: S e t   p a r a m e t e r   " A p p D i r e c t o r y "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
-  [WARN] NSSM failed: Cannot validate argument on parameter 'ArgumentList'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.
     stdout: S e t   p a r a m e t e r   " D i s p l a y N a m e "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
     stdout: S e t   p a r a m e t e r   " D e s c r i p t i o n "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
     stdout: S e t   p a r a m e t e r   " S t a r t "   f o r   s e r v i c e   " C r o w d S e c " . ,  ,  ,
@@ -22,19 +27,18 @@
   [OK] Config created at C:\ProgramData\CrowdSec\config\config.yaml
 
 === Starting CrowdSec Guardian ===
-  [FAIL] Could not start service: Failed to start service 'CrowdSec Guardian (CrowdSec)'.
+  [WARN] Start-Service failed: Failed to start service 'CrowdSec Guardian (CrowdSec)'.
+  Trying NSSM start...
+    stderr: C r o w d S e c :   U n e x p e c t e d   s t a t u s   S E R V I C E _ S T O P P E D   i n   r e s p o n s e   t o   S T A R T   c o n t r o l . ,  ,  ,
+  [WARN] NSSM exit code: 1
+  [FAIL] Could not start service
 
-  Troubleshooting steps:
-  1. Check service logs:
-     Get-Content 'C:\ProgramData\CrowdSec\log\service_stderr.log'
-     Get-Content 'C:\ProgramData\CrowdSec\log\service_stdout.log'
-  2. Test crowdsec.exe manually:
+  Manual troubleshooting:
+  1. Test crowdsec.exe manually:
      cd 'C:\Program Files\CrowdSec'
      .\crowdsec.exe --config 'C:\ProgramData\CrowdSec\config\config.yaml'
-  3. Check Windows Event Log:
+  2. Check Windows Event Log:
      Get-EventLog -LogName System -Source 'Service Control Manager' -Newest 10
-  4. Try starting manually:
-     nssm start CrowdSec
 
 
 === Verification ===
