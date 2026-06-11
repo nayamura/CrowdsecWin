@@ -5,23 +5,47 @@
   [OK] crowdsec.exe version: version: v1.0.0-custom-b962bc0 Codename: alphaga BuildDate: 2026-06-10 GoVersion: 1.26.1 Platform: windows libre2: WebAssembly User-Agent: crowdsec/v1.0.0-custom-b962bc0-windows Constraint_parser: >= 1.0, <= 3.0 Constraint_scenario: >= 1.0, <= 3.0 Constraint_api: v1 Constraint_acquis: >= 1.0, < 2.0 Built-in optional components: datasource_appsec, datasource_cloudwatch, datasource_docker, datasource_file, datasource_http, datasource_journalctl, datasource_k8s-audit, datasource_kafka, datasource_kinesis, datasource_loki, datasource_s3, datasource_syslog, datasource_victorialogs, datasource_wineventlog, db_mysql, db_postgres, db_sqlite Excluded components: cscli_setup
 
 === Creating CrowdSec Windows Service ===
-  Installing service...
-    stdout: S e r v i c e   " C r o w d S e c "   i n s t a l l e d   s u c c e s s f u l l y !
+  [WARN] Removing existing CrowdSec service...
+    stderr: E r r o r   d e l e t i n g   s e r v i c e !
 
+  [WARN] NSSM exit code: 4
+  Installing service...
+    stderr: E r r o r   c r e a t i n g   s e r v i c e !
+ C r e a t e S e r v i c e ( ) :   T h e   s p e c i f i e d   s e r v i c e   h a s   b e e n   m a r k e d   f o r      l e t i o n .
+
+
+  [WARN] NSSM exit code: 5
     stdout: S e t   p a r a m e t e r   " A p p D i r e c t o r y "   f o r   s e r v i c e   " C r o w d S e c " .
 
     stdout: S e t   p a r a m e t e r   " A p p P a r a m e t e r s "   f o r   s e r v i c e   " C r o w d S e c " .
 
-    stdout: S e t   p a r a m e t e r   " D i s p l a y N a m e "   f o r   s e r v i c e   " C r o w d S e c " .
+    stderr: E r r o r   e d i t i n g   s e r v i c e !
+ C h a n g e S e r v i c e C o n f i g ( ) :   T h e   s p e c i f i e d   s e r v i c e   h a s   b e e n   m a r k e    f o r   d e l e t i o n .
 
-    stdout: S e t   p a r a m e t e r   " D e s c r i p t i o n "   f o r   s e r v i c e   " C r o w d S e c " .
+ E r r o r   s e t t i n g   p a r a m e t e r   " D i s p l a y N a m e "   f o r   s e r v i c e   " C r o w d S e c  
 
-    stdout: S e t   p a r a m e t e r   " S t a r t "   f o r   s e r v i c e   " C r o w d S e c " .
+  [WARN] NSSM exit code: 6
+    stderr: E r r o r   s e t t i n g   p a r a m e t e r   " D e s c r i p t i o n "   f o r   s e r v i c e   " C r o   d S e c " !
 
-    stdout: R e s e t   p a r a m e t e r   " O b j e c t N a m e "   f o r   s e r v i c e   " C r o w d S e c "   t o   i t s   d e f a u l t .
+  [WARN] NSSM exit code: 6
+    stderr: E r r o r   e d i t i n g   s e r v i c e !
+ C h a n g e S e r v i c e C o n f i g ( ) :   T h e   s p e c i f i e d   s e r v i c e   h a s   b e e n   m a r k e    f o r   d e l e t i o n .
 
-    stdout: S e t   p a r a m e t e r   " T y p e "   f o r   s e r v i c e   " C r o w d S e c " .
+ E r r o r   s e t t i n g   p a r a m e t e r   " S t a r t "   f o r   s e r v i c e   " C r o w d S e c " !
 
+  [WARN] NSSM exit code: 6
+    stderr: E r r o r   e d i t i n g   s e r v i c e !
+ C h a n g e S e r v i c e C o n f i g ( ) :   T h e   s p e c i f i e d   s e r v i c e   h a s   b e e n   m a r k e    f o r   d e l e t i o n .
+
+ E r r o r   s e t t i n g   p a r a m e t e r   " O b j e c t N a m e "   f o r   s e r v i c e   " C r o w d S e c "
+
+  [WARN] NSSM exit code: 6
+    stderr: E r r o r   e d i t i n g   s e r v i c e !
+ C h a n g e S e r v i c e C o n f i g ( ) :   T h e   s p e c i f i e d   s e r v i c e   h a s   b e e n   m a r k e    f o r   d e l e t i o n .
+
+ E r r o r   s e t t i n g   p a r a m e t e r   " T y p e "   f o r   s e r v i c e   " C r o w d S e c " !
+
+  [WARN] NSSM exit code: 6
     stdout: S e t   p a r a m e t e r   " A p p S t d o u t "   f o r   s e r v i c e   " C r o w d S e c " .
 
     stdout: S e t   p a r a m e t e r   " A p p S t d e r r "   f o r   s e r v i c e   " C r o w d S e c " .
@@ -44,7 +68,7 @@
   [OK] Config created at C:\ProgramData\CrowdSec\config\config.yaml
 
 === Starting CrowdSec Guardian ===
-  [WARN] Start-Service failed: Failed to start service 'CrowdSec Guardian (CrowdSec)'.
+  [WARN] Start-Service failed: Service 'CrowdSec Guardian (CrowdSec)' cannot be started due to the following error: Cannot start service CrowdSec on computer '.'.
   Trying NSSM start...
     stderr: N S S M :   T h e   n o n - s u c k i n g   s e r v i c e   m a n a g e r
  V e r s i o n   2 . 2 4   6 4 - b i t ,   2 0 1 4 - 0 8 - 3 1
