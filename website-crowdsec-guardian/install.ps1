@@ -350,7 +350,7 @@ if (Test-Path $nssmPath) {
 
         # Install service using sc.exe with short paths (no spaces)
         Write-Host "  Installing service with sc.exe..." -ForegroundColor Gray
-        $binPath = "$crowdsecShortPath --config $DataDir\config\config.yaml"
+        $binPath = "$crowdsecShortPath --config $DataDir\config\config.yaml -winsvc"
         Write-Host "  binPath: $binPath" -ForegroundColor DarkGray
         $scResult = sc.exe create CrowdSec binPath= $binPath start= auto DisplayName= "CrowdSec Guardian" obj= "LocalSystem" 2>&1
         Write-Host "  sc.exe create result: $scResult" -ForegroundColor DarkGray
